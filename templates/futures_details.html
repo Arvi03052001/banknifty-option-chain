@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankNifty Futures Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --danger-gradient: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+            --warning-gradient: linear-gradient(135deg, #FDBB2D 0%, #22C1C3 100%);
+            --dark-bg: #0f1419;
+            --card-bg: #1a1f2e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8c1;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.37);
+            --shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(45deg, #0f1419, #1a1f2e, #2d3748);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: var(--shadow-light);
+            transition: all 0.3s ease;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .main-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .futures-symbol {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .date-filter-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            border-radius: 10px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            color: var(--text-primary);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .table {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding: 0.75rem 0.5rem;
+        }
+
+        .table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 0.75rem 0.5rem;
+        }
+
+        .table-responsive {
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 15px;
+            padding: 1rem;
+        }
+
+        .error-message {
+            background: var(--danger-gradient);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .no-data-message {
+            background: var(--warning-gradient);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .quick-date-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .quick-date-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .quick-date-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner-border {
+            color: #667eea;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .futures-symbol {
+                font-size: 1.2rem;
+            }
+
+            .glass-card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .date-filter-card {
+                padding: 1rem;
+            }
+
+            .table {
+                font-size: 0.8rem;
+            }
+
+            .table th, .table td {
+                padding: 0.5rem 0.25rem;
+            }
+
+            .chart-container {
+                height: 300px;
+                padding: 0.5rem;
+            }
+
+            .quick-date-buttons {
+                justify-content: center;
+            }
+
+            .quick-date-btn {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+
+            .stat-card {
+                padding: 0.75rem;
+            }
+
+            .stat-value {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header-title {
+                font-size: 1.3rem;
+            }
+
+            .futures-symbol {
+                font-size: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table {
+                font-size: 0.75rem;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+
+        /* Navigation buttons */
+        .nav-buttons {
+            position: fixed;
+            bottom: 1rem;
+            left: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <header class="main-header">
+        <div class="container">
+            <h1 class="header-title">
+                <i class="fas fa-chart-line"></i> BankNifty Futures Details
+            </h1>
+            {% if futures_info %}
+            <div class="header-subtitle">
+                Current: {{ futures_info.current.symbol }} | Next: {{ futures_info.next.symbol }}
+            </div>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="container-fluid px-3">
+        <!-- Symbol Display -->
+        <div class="glass-card text-center">
+            <div class="futures-symbol">{{ symbol }}</div>
+            <small class="text-muted">15-minute candle data with Heikin Ashi VWAP</small>
+        </div>
+
+        <!-- Date Filter -->
+        <div class="date-filter-card">
+            <form id="dateForm" method="GET" action="/futures-details">
+                <div class="row align-items-end">
+                    <div class="col-md-4 mb-3">
+                        <label for="dateInput" class="form-label">
+                            <i class="fas fa-calendar"></i> Select Date
+                        </label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="dateInput" 
+                               name="date" 
+                               value="{{ selected_date }}"
+                               max="{{ selected_date }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Load Data
+                        </button>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <button type="button" class="btn btn-secondary w-100" onclick="loadToday()">
+                            <i class="fas fa-calendar-day"></i> Today
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Quick Date Buttons -->
+                <div class="quick-date-buttons">
+                    <button type="button" class="quick-date-btn" onclick="loadDate(-1)">Yesterday</button>
+                    <button type="button" class="quick-date-btn" onclick="loadDate(-2)">2 Days Ago</button>
+                    <button type="button" class="quick-date-btn" onclick="loadDate(-3)">3 Days Ago</button>
+                    <button type="button" class="quick-date-btn" onclick="loadDate(-7)">1 Week Ago</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading futures data...</p>
+        </div>
+
+        <!-- Error Message -->
+        {% if error_message %}
+        <div class="error-message">
+            <h4><i class="fas fa-exclamation-triangle"></i> No Data Available</h4>
+            <p>{{ error_message }}</p>
+            <small>Try selecting a different date when the market was open.</small>
+        </div>
+        {% endif %}
+
+        <!-- Data Display -->
+        {% if rows %}
+        <!-- Statistics -->
+        <div class="glass-card">
+            <h5 class="mb-3"><i class="fas fa-chart-bar"></i> Trading Statistics for {{ selected_date }}</h5>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ rows|length }}</div>
+                    <div class="stat-label">Candles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ "%.2f"|format(rows[0].open) }}</div>
+                    <div class="stat-label">Open</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ "%.2f"|format(rows[-1].close) }}</div>
+                    <div class="stat-label">Close</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ "%.2f"|format(rows|map(attribute='high')|max) }}</div>
+                    <div class="stat-label">High</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ "%.2f"|format(rows|map(attribute='low')|min) }}</div>
+                    <div class="stat-label">Low</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ "%.2f"|format(rows[-1].ha_vwap) }}</div>
+                    <div class="stat-label">Final HA VWAP</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Chart -->
+        <div class="glass-card">
+            <h5 class="mb-3"><i class="fas fa-chart-candlestick"></i> Price Chart</h5>
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="glass-card">
+            <h5 class="mb-3"><i class="fas fa-table"></i> Detailed Data ({{ rows|length }} candles)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th class="d-none d-sm-table-cell">Open</th>
+                            <th class="d-none d-sm-table-cell">High</th>
+                            <th class="d-none d-sm-table-cell">Low</th>
+                            <th>Close</th>
+                            <th>HA VWAP</th>
+                            <th class="d-none d-lg-table-cell">Volume</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                        <tr>
+                            <td class="fw-bold">{{ row.time }}</td>
+                            <td class="d-none d-sm-table-cell">{{ "%.2f"|format(row.open) }}</td>
+                            <td class="text-success d-none d-sm-table-cell">{{ "%.2f"|format(row.high) }}</td>
+                            <td class="text-danger d-none d-sm-table-cell">{{ "%.2f"|format(row.low) }}</td>
+                            <td>{{ "%.2f"|format(row.close) }}</td>
+                            <td class="text-warning">{{ "%.2f"|format(row.ha_vwap) }}</td>
+                            <td class="d-none d-lg-table-cell">
+                                {% if row.volume and row.volume != 0 %}
+                                    {{ "{:,}".format(row.volume|int) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Spacer for fixed navigation -->
+        <div style="height: 100px;"></div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+        <a href="/" class="btn btn-secondary nav-btn">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Date manipulation functions
+        function loadToday() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateInput').value = today;
+            document.getElementById('dateForm').submit();
+        }
+
+        function loadDate(daysOffset) {
+            const date = new Date();
+            date.setDate(date.getDate() + daysOffset);
+            const dateString = date.toISOString().split('T')[0];
+            document.getElementById('dateInput').value = dateString;
+            document.getElementById('dateForm').submit();
+        }
+
+        // Show loading spinner on form submit
+        document.getElementById('dateForm').addEventListener('submit', function() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+        });
+
+        // Chart initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if rows %}
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            const labels = [{% for row in rows %}"{{ row.time }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+            
+            // OHLC Data for candlesticks
+            const ohlcData = [
+                {% for row in rows %}
+                {
+                    open: {{ row.open }},
+                    high: {{ row.high }},
+                    low: {{ row.low }},
+                    close: {{ row.close }}
+                }{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            ];
+            
+            const vwaps = [{% for row in rows %}{{ row.ha_vwap }}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+            // Compute y-axis min/max from OHLC data
+            const allHighs = ohlcData.map(c => c.high);
+            const allLows = ohlcData.map(c => c.low);
+            const yMin = Math.min(...allLows) * 0.999;
+            const yMax = Math.max(...allHighs) * 1.001;
+
+            // Create chart
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'HA VWAP',
+                            data: vwaps,
+                            type: 'line',
+                            borderColor: '#ffa500',
+                            backgroundColor: 'transparent',
+                            tension: 0.4,
+                            fill: false,
+                            pointRadius: 2,
+                            pointBackgroundColor: '#ffa500',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 1,
+                            borderWidth: 2,
+                            order: 2
+                        },
+                        {
+                            label: 'Candles',
+                            data: ohlcData.map(() => 0), // dummy data
+                            backgroundColor: 'rgba(0,0,0,0)',
+                            borderColor: 'rgba(0,0,0,0)',
+                            borderWidth: 0,
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#fff',
+                                font: { 
+                                    family: 'Inter',
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#444',
+                            borderWidth: 1,
+                            titleFont: { 
+                                family: 'Inter',
+                                size: 12,
+                                weight: 'bold'
+                            },
+                            bodyFont: { 
+                                family: 'Inter',
+                                size: 11
+                            },
+                            callbacks: {
+                                beforeBody: function(context) {
+                                    const index = context[0].dataIndex;
+                                    const candle = ohlcData[index];
+                                    const vwap = vwaps[index];
+                                    
+                                    return [
+                                        `Open: ${candle.open.toFixed(2)}`,
+                                        `High: ${candle.high.toFixed(2)}`,
+                                        `Low: ${candle.low.toFixed(2)}`,
+                                        `Close: ${candle.close.toFixed(2)}`,
+                                        `HA VWAP: ${vwap.toFixed(2)}`
+                                    ];
+                                },
+                                label: function() {
+                                    return '';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: yMin,
+                            max: yMax,
+                            ticks: {
+                                color: '#fff',
+                                font: {
+                                    family: 'Inter',
+                                    size: 10
+                                },
+                                callback: function(value) {
+                                    return value.toFixed(2);
+                                }
+                            },
+                            grid: { 
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                borderColor: 'rgba(255, 255, 255, 0.2)'
+                            },
+                            border: {
+                                color: 'rgba(255, 255, 255, 0.2)'
+                            }
+                        },
+                        x: {
+                            type: 'category',
+                            ticks: {
+                                color: '#fff',
+                                font: {
+                                    family: 'Inter',
+                                    size: 9
+                                },
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: { 
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                borderColor: 'rgba(255, 255, 255, 0.2)'
+                            },
+                            border: {
+                                color: 'rgba(255, 255, 255, 0.2)'
+                            }
+                        }
+                    },
+                    animation: {
+                        onComplete: function() {
+                            drawCandlesticks();
+                        }
+                    }
+                }
+            });
+
+            function drawCandlesticks() {
+                const chartArea = chart.chartArea;
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+                
+                const n = ohlcData.length;
+                const chartWidth = chartArea.right - chartArea.left;
+                const maxCandleWidth = window.innerWidth < 768 ? 8 : 12;
+                const minCandleWidth = window.innerWidth < 768 ? 2 : 3;
+                let candleWidth = Math.max(minCandleWidth, Math.min(maxCandleWidth, chartWidth / (n * 1.5)));
+                
+                ohlcData.forEach((candle, index) => {
+                    let x = xScale.getPixelForValue(index);
+                    x = Math.max(chartArea.left + candleWidth/2, Math.min(chartArea.right - candleWidth/2, x));
+                    const highY = yScale.getPixelForValue(candle.high);
+                    const lowY = yScale.getPixelForValue(candle.low);
+                    const openY = yScale.getPixelForValue(candle.open);
+                    const closeY = yScale.getPixelForValue(candle.close);
+                    
+                    const isBullish = candle.close >= candle.open;
+                    const bodyTop = Math.min(openY, closeY);
+                    const bodyBottom = Math.max(openY, closeY);
+                    const bodyHeight = Math.abs(closeY - openY);
+                    
+                    // Draw wick
+                    ctx.strokeStyle = isBullish ? '#00ff88' : '#ff4757';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x, highY);
+                    ctx.lineTo(x, lowY);
+                    ctx.stroke();
+                    
+                    // Draw body
+                    if (bodyHeight > 0) {
+                        ctx.fillStyle = isBullish ? '#00ff88' : '#ff4757';
+                        ctx.fillRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+                        if (isBullish) {
+                            ctx.strokeStyle = '#00ff88';
+                            ctx.lineWidth = 1;
+                            ctx.strokeRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+                        }
+                    } else {
+                        // Doji
+                        ctx.strokeStyle = isBullish ? '#00ff88' : '#ff4757';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(x - candleWidth/2, openY);
+                        ctx.lineTo(x + candleWidth/2, openY);
+                        ctx.stroke();
+                    }
+                });
+            }
+
+            // Redraw candlesticks when chart updates
+            const originalDraw = Chart.prototype.draw;
+            Chart.prototype.draw = function() {
+                originalDraw.apply(this, arguments);
+                if (this.canvas === ctx.canvas) {
+                    drawCandlesticks();
+                }
+            };
+            
+            // Redraw on resize
+            window.addEventListener('resize', function() {
+                chart.update();
+            });
+            {% endif %}
+        });
+    </script>
+</body>
+</html>

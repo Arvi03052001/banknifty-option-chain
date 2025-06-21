@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BANKNIFTY Futures Configuration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --dark-bg: #0f1419;
+            --card-bg: #1a1f2e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8c1;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.37);
+            --shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            background: linear-gradient(45deg, #0f1419, #1a1f2e, #2d3748);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .main-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: var(--shadow-light);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .glass-card:hover {
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .config-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .config-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .config-value {
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .symbol-highlight {
+            background: var(--primary-gradient);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+            border: 1px solid #4caf50;
+        }
+
+        .status-upcoming {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .back-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+
+    <header class="main-header">
+        <h1 class="header-title">BANKNIFTY Futures Configuration</h1>
+        <p class="text-muted mt-2">Automatic futures symbol management system</p>
+    </header>
+
+    <main class="container-fluid px-3">
+        {% if futures_info %}
+        <div class="glass-card">
+            <h3 class="mb-4">Configuration Status</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="config-item">
+                        <div class="config-label">Configuration Date</div>
+                        <div class="config-value">{{ futures_info.updated_on }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="config-item">
+                        <div class="config-label">System Status</div>
+                        <div class="config-value">
+                            <span class="status-badge status-active">ACTIVE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="glass-card">
+                    <h4 class="mb-3">
+                        Current Month Futures 
+                        <span class="status-badge status-active">ACTIVE</span>
+                    </h4>
+                    
+                    <div class="config-item">
+                        <div class="config-label">Symbol</div>
+                        <div class="config-value symbol-highlight">{{ futures_info.current.symbol }}</div>
+                    </div>
+                    
+                    <div class="config-item">
+                        <div class="config-label">Expiry Date</div>
+                        <div class="config-value">{{ futures_info.current.expiry_date }}</div>
+                    </div>
+                    
+                    <div class="config-item">
+                        <div class="config-label">Month/Year</div>
+                        <div class="config-value">{{ futures_info.current.month_name }} {{ futures_info.current.year }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="glass-card">
+                    <h4 class="mb-3">
+                        Next Month Futures 
+                        <span class="status-badge status-upcoming">UPCOMING</span>
+                    </h4>
+                    
+                    <div class="config-item">
+                        <div class="config-label">Symbol</div>
+                        <div class="config-value symbol-highlight">{{ futures_info.next.symbol }}</div>
+                    </div>
+                    
+                    <div class="config-item">
+                        <div class="config-label">Expiry Date</div>
+                        <div class="config-value">{{ futures_info.next.expiry_date }}</div>
+                    </div>
+                    
+                    <div class="config-item">
+                        <div class="config-label">Month/Year</div>
+                        <div class="config-value">{{ futures_info.next.month_name }} {{ futures_info.next.year }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <h4 class="mb-3">How It Works</h4>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="config-item">
+                        <div class="config-label">Automatic Detection</div>
+                        <div class="config-value">System automatically detects current date and calculates appropriate futures symbols</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="config-item">
+                        <div class="config-label">Expiry Logic</div>
+                        <div class="config-value">Uses last Thursday of each month as expiry date for BANKNIFTY futures</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="config-item">
+                        <div class="config-label">Auto Update</div>
+                        <div class="config-value">Configuration updates automatically when current month expires</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <h4 class="mb-3">Usage in Application</h4>
+            <ul class="list-unstyled">
+                <li class="mb-2">✅ <strong>Option Chain:</strong> Uses current month futures for price display and strike highlighting</li>
+                <li class="mb-2">✅ <strong>Trade Page:</strong> Automatically uses current month futures for VWAP calculations</li>
+                <li class="mb-2">✅ <strong>Futures Details:</strong> Shows current month futures candle data</li>
+                <li class="mb-2">✅ <strong>Option Chain Data:</strong> Combines current and next month option data</li>
+            </ul>
+        </div>
+        {% else %}
+        <div class="glass-card">
+            <div class="alert alert-warning">
+                <h4>Configuration Not Available</h4>
+                <p>Unable to load futures configuration. Please check the system.</p>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Back Button -->
+    <a href="/" class="btn btn-primary back-button">Back to Option Chain</a>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

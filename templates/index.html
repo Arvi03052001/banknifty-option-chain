@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="10">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankNifty Option Chain</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --dark-bg: #0f1419;
+            --card-bg: #1a1f2e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8c1;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.37);
+            --shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            background: linear-gradient(45deg, #0f1419, #1a1f2e, #2d3748);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .main-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        @media (max-width: 576px) {
+            .header-title {
+                font-size: 1.8rem;
+            }
+
+            .table th, .table td {
+                font-size: 0.8rem;
+                padding: 0.3rem;
+            }
+
+            .glass-card {
+                padding: 1rem;
+            }
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: var(--shadow-light);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .glass-card:hover {
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .table th, .table td {
+            color: var(--text-primary);
+        }
+
+        .table thead {
+            background-color: #1a1f2e;
+        }
+
+        .info-row strong {
+            color: var(--text-secondary);
+        }
+
+        .refresh-button, .oi-ltp-button, .trade-button {
+            position: fixed;
+            bottom: 20px;
+            z-index: 10;
+        }
+
+        .refresh-button { right: 20px; }
+        .oi-ltp-button { right: 150px; }
+        .trade-button { right: 280px; }
+
+        /* Include all your OI heatmap styles here (shortened for brevity) */
+        .highlighted-strike {
+            background-color: #ffeb3b !important;
+            font-weight: bold !important;
+            border: 2px solid #ff9800 !important;
+            color: #333 !important;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+        }
+
+        .every-500-strike {
+            background-color: rgba(33, 150, 243, 0.15) !important;  /* Deeper blue */
+            border-left: 2px solid #2196f3 !important;
+            border-right: 2px solid #2196f3 !important;
+            font-weight: bold !important;
+            color: #ffffff !important;
+        }
+
+        .table-dark {
+            background-color: var(--glass-bg) !important;
+            color: var(--text-primary);
+        }
+
+        .table-dark th, .table-dark td {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        td[class*="call-"], td[class*="put-"] {
+            color: #fff !important;
+            font-weight: 500;
+        }
+
+        /* Call side green gradient styles */
+        .call-chg-oi-1 { background: linear-gradient(to right, rgba(76, 175, 80, 0.1), transparent) !important; }
+        .call-chg-oi-2 { background: linear-gradient(to right, rgba(76, 175, 80, 0.2), transparent) !important; }
+        .call-chg-oi-3 { background: linear-gradient(to right, rgba(76, 175, 80, 0.3), transparent) !important; }
+        .call-chg-oi-4 { background: linear-gradient(to right, rgba(76, 175, 80, 0.4), transparent) !important; }
+        .call-chg-oi-5 { background: linear-gradient(to right, rgba(76, 175, 80, 0.5), transparent) !important; }
+        .call-chg-oi-6 { background: linear-gradient(to right, rgba(76, 175, 80, 0.6), transparent) !important; }
+        .call-chg-oi-7 { background: linear-gradient(to right, rgba(76, 175, 80, 0.7), transparent) !important; }
+        .call-chg-oi-8 { background: linear-gradient(to right, rgba(76, 175, 80, 0.8), transparent) !important; }
+        .call-chg-oi-9 { background: linear-gradient(to right, rgba(76, 175, 80, 0.9), transparent) !important; }
+        .call-chg-oi-10 { background: linear-gradient(to right, rgba(76, 175, 80, 1.0), transparent) !important; }
+
+        .call-oi-1 { background: linear-gradient(to right, rgba(139, 195, 74, 0.1), transparent) !important; }
+        .call-oi-2 { background: linear-gradient(to right, rgba(139, 195, 74, 0.2), transparent) !important; }
+        .call-oi-3 { background: linear-gradient(to right, rgba(139, 195, 74, 0.3), transparent) !important; }
+        .call-oi-4 { background: linear-gradient(to right, rgba(139, 195, 74, 0.4), transparent) !important; }
+        .call-oi-5 { background: linear-gradient(to right, rgba(139, 195, 74, 0.5), transparent) !important; }
+        .call-oi-6 { background: linear-gradient(to right, rgba(139, 195, 74, 0.6), transparent) !important; }
+        .call-oi-7 { background: linear-gradient(to right, rgba(139, 195, 74, 0.7), transparent) !important; }
+        .call-oi-8 { background: linear-gradient(to right, rgba(139, 195, 74, 0.8), transparent) !important; }
+        .call-oi-9 { background: linear-gradient(to right, rgba(139, 195, 74, 0.9), transparent) !important; }
+        .call-oi-10 { background: linear-gradient(to right, rgba(139, 195, 74, 1.0), transparent) !important; }
+
+        /* Put side red gradient styles */
+        .put-chg-oi-1 { background: linear-gradient(to left, rgba(244, 67, 54, 0.1), transparent) !important; }
+        .put-chg-oi-2 { background: linear-gradient(to left, rgba(244, 67, 54, 0.2), transparent) !important; }
+        .put-chg-oi-3 { background: linear-gradient(to left, rgba(244, 67, 54, 0.3), transparent) !important; }
+        .put-chg-oi-4 { background: linear-gradient(to left, rgba(244, 67, 54, 0.4), transparent) !important; }
+        .put-chg-oi-5 { background: linear-gradient(to left, rgba(244, 67, 54, 0.5), transparent) !important; }
+        .put-chg-oi-6 { background: linear-gradient(to left, rgba(244, 67, 54, 0.6), transparent) !important; }
+        .put-chg-oi-7 { background: linear-gradient(to left, rgba(244, 67, 54, 0.7), transparent) !important; }
+        .put-chg-oi-8 { background: linear-gradient(to left, rgba(244, 67, 54, 0.8), transparent) !important; }
+        .put-chg-oi-9 { background: linear-gradient(to left, rgba(244, 67, 54, 0.9), transparent) !important; }
+        .put-chg-oi-10 { background: linear-gradient(to left, rgba(244, 67, 54, 1.0), transparent) !important; }
+
+        .put-oi-1 { background: linear-gradient(to left, rgba(233, 30, 99, 0.1), transparent) !important; }
+        .put-oi-2 { background: linear-gradient(to left, rgba(233, 30, 99, 0.2), transparent) !important; }
+        .put-oi-3 { background: linear-gradient(to left, rgba(233, 30, 99, 0.3), transparent) !important; }
+        .put-oi-4 { background: linear-gradient(to left, rgba(233, 30, 99, 0.4), transparent) !important; }
+        .put-oi-5 { background: linear-gradient(to left, rgba(233, 30, 99, 0.5), transparent) !important; }
+        .put-oi-6 { background: linear-gradient(to left, rgba(233, 30, 99, 0.6), transparent) !important; }
+        .put-oi-7 { background: linear-gradient(to left, rgba(233, 30, 99, 0.7), transparent) !important; }
+        .put-oi-8 { background: linear-gradient(to left, rgba(233, 30, 99, 0.8), transparent) !important; }
+        .put-oi-9 { background: linear-gradient(to left, rgba(233, 30, 99, 0.9), transparent) !important; }
+        .put-oi-10 { background: linear-gradient(to left, rgba(233, 30, 99, 1.0), transparent) !important; }
+
+        /* Navigation Buttons */
+        .navigation-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.75rem 0.5rem;
+            border: none;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        .nav-btn i {
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .btn-text {
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                gap: 0.25rem;
+            }
+            
+            .nav-btn {
+                padding: 0.5rem 0.25rem;
+                min-width: 60px;
+            }
+            
+            .nav-btn i {
+                font-size: 1rem;
+            }
+            
+            .btn-text {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .btn-text {
+                display: none;
+            }
+            
+            .nav-btn {
+                padding: 0.75rem 0.5rem;
+            }
+            
+            .nav-btn i {
+                font-size: 1.2rem;
+                margin-bottom: 0;
+            }
+        }
+
+        /* Add bottom padding to main content to avoid overlap */
+        main {
+            padding-bottom: 100px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+
+    <header class="main-header">
+        <h1 class="header-title">BankNifty Option Chain</h1>
+        {% if futures_info %}
+        <div class="mt-2">
+            <small class="text-muted">
+                Current: {{ futures_info.current.symbol }} (Exp: {{ futures_info.current.expiry_date }}) | 
+                Next: {{ futures_info.next.symbol }} (Exp: {{ futures_info.next.expiry_date }})
+            </small>
+        </div>
+        {% endif %}
+    </header>
+
+    <main class="container-fluid px-3">
+        <div class="glass-card">
+            <div class="row text-center info-row">
+                <div class="col-12 col-md-3 mb-2 mb-md-0">
+                    <strong>Spot Price:</strong> {{ spot_price | default('-') }}
+                </div>
+                <div class="col-12 col-md-3 mb-2 mb-md-0">
+                    <strong>Current Futures:</strong> {{ futures_price | default('-') }}
+                    {% if futures_info %}
+                    <br><small class="text-muted">{{ futures_info.current.symbol }}</small>
+                    {% endif %}
+                </div>
+                <div class="col-12 col-md-3 mb-2 mb-md-0">
+                    {% if futures_info %}
+                    <strong>Next Month:</strong> {{ futures_info.next.symbol }}
+                    <br><small class="text-muted">Exp: {{ futures_info.next.expiry_date }}</small>
+                    {% endif %}
+                </div>
+                <div class="col-12 col-md-3">
+                    <strong>Last Updated:</strong> {{ last_updated | default('-') }}
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="table-responsive">
+                <table class="table table-dark table-bordered table-sm text-nowrap" style="background-color: var(--glass-bg); font-size: 0.9rem;">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="text-center">CALL Options</th>
+                            <th class="text-center">Strike</th>
+                            <th colspan="2" class="text-center">PUT Options</th>
+                        </tr>
+                        <tr>
+                            <th>Call ChgOI</th>
+                            <th>Call OI</th>
+                            <th class="text-center">Price</th>
+                            <th>Put OI</th>
+                            <th>Put ChgOI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in option_chain %}
+                        {% set strike_classes = [] %}
+                        {% if row.strike == closest_strike %}
+                            {% set _ = strike_classes.append('highlighted-strike') %}
+                        {% endif %}
+                        {% if row.strike % 500 == 0 %}
+                            {% set _ = strike_classes.append('every-500-strike') %}
+                        {% endif %}
+                        <tr>
+                            <td class="{{ row.call.chg_oi_class }}">{{ row.call.chg_oi }}</td>
+                            <td class="{{ row.call.oi_class }}">{{ row.call.oi }}</td>
+                            <td class="text-center fw-bold {{ ' '.join(strike_classes) }}">{{ row.strike }}</td>
+                            <td class="{{ row.put.oi_class }}">{{ row.put.oi }}</td>
+                            <td class="{{ row.put.chg_oi_class }}">{{ row.put.chg_oi }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons">
+        <div class="nav-container">
+            <a href="/trade" class="nav-btn btn-danger">
+                <i class="fas fa-chart-line"></i>
+                <span class="btn-text">Trade</span>
+            </a>
+            <a href="/oi-ltp" class="nav-btn btn-success">
+                <i class="fas fa-table"></i>
+                <span class="btn-text">OI-LTP</span>
+            </a>
+            <a href="/option_chain_history" class="nav-btn btn-info">
+                <i class="fas fa-history"></i>
+                <span class="btn-text">History</span>
+            </a>
+            <a href="/futures-config" class="nav-btn btn-warning">
+                <i class="fas fa-cog"></i>
+                <span class="btn-text">Config</span>
+            </a>
+            <button class="nav-btn btn-primary" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i>
+                <span class="btn-text">Refresh</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="10">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankNifty OI-LTP Chain</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --dark-bg: #0f1419;
+            --card-bg: #1a1f2e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8c1;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.37);
+            --shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            background: linear-gradient(45deg, #0f1419, #1a1f2e, #2d3748);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .main-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: var(--shadow-light);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .glass-card:hover {
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .table th, .table td {
+            color: var(--text-primary);
+        }
+
+        .table thead {
+            background-color: #1a1f2e;
+        }
+
+        .spot-price-box {
+            background-color: #28a745 !important;
+            color: white !important;
+            font-weight: bold !important;
+            border: 3px solid #155724 !important;
+            text-align: center !important;
+            animation: spotPulse 3s infinite;
+        }
+
+        @keyframes spotPulse {
+            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+        }
+
+        .highest-volume-strike {
+            background-color: #ffc107 !important;
+            font-weight: bold !important;
+            border: 2px solid #e0a800 !important;
+            color: #333 !important;
+        }
+
+        .every-500-strike {
+            background-color: rgba(33, 150, 243, 0.15) !important;
+            border-left: 2px solid #2196f3 !important;
+            border-right: 2px solid #2196f3 !important;
+            font-weight: bold !important;
+            color: #ffffff !important;
+        }
+
+        .call-ltp { color: #28a745 !important; font-weight: 600; }
+        .put-ltp { color: #dc3545 !important; font-weight: 600; }
+        .call-volume { color: #28a745 !important; font-weight: 500; }
+        .put-volume { color: #dc3545 !important; font-weight: 500; }
+        .strike-price { font-weight: bold; }
+
+        .expiry-badge {
+            background-color: #007bff;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        .refresh-button, .back-button {
+            position: fixed;
+            bottom: 20px;
+            z-index: 10;
+        }
+
+        .refresh-button { right: 20px; }
+        .back-button { left: 20px; }
+
+        @media (max-width: 576px) {
+            .header-title { font-size: 1.6rem; }
+            .glass-card { padding: 1rem; }
+            .expiry-badge { display: block; margin-bottom: 10px; }
+        }
+
+        /* Call side ChgOI green gradient styles */
+        .call-volume-1 { background: linear-gradient(to right, rgba(76, 175, 80, 0.1), transparent) !important; }
+        .call-volume-2 { background: linear-gradient(to right, rgba(76, 175, 80, 0.2), transparent) !important; }
+        .call-volume-3 { background: linear-gradient(to right, rgba(76, 175, 80, 0.3), transparent) !important; }
+        .call-volume-4 { background: linear-gradient(to right, rgba(76, 175, 80, 0.4), transparent) !important; }
+        .call-volume-5 { background: linear-gradient(to right, rgba(76, 175, 80, 0.5), transparent) !important; }
+        .call-volume-6 { background: linear-gradient(to right, rgba(76, 175, 80, 0.6), transparent) !important; }
+        .call-volume-7 { background: linear-gradient(to right, rgba(76, 175, 80, 0.7), transparent) !important; }
+        .call-volume-8 { background: linear-gradient(to right, rgba(76, 175, 80, 0.8), transparent) !important; }
+        .call-volume-9 { background: linear-gradient(to right, rgba(76, 175, 80, 0.9), transparent) !important; }
+        .call-volume-10 { background: linear-gradient(to right, rgba(76, 175, 80, 1.0), transparent) !important; }
+
+        /* Put side ChgOI red gradient styles */
+        .put-volume-1 { background: linear-gradient(to left, rgba(244, 67, 54, 0.1), transparent) !important; }
+        .put-volume-2 { background: linear-gradient(to left, rgba(244, 67, 54, 0.2), transparent) !important; }
+        .put-volume-3 { background: linear-gradient(to left, rgba(244, 67, 54, 0.3), transparent) !important; }
+        .put-volume-4 { background: linear-gradient(to left, rgba(244, 67, 54, 0.4), transparent) !important; }
+        .put-volume-5 { background: linear-gradient(to left, rgba(244, 67, 54, 0.5), transparent) !important; }
+        .put-volume-6 { background: linear-gradient(to left, rgba(244, 67, 54, 0.6), transparent) !important; }
+        .put-volume-7 { background: linear-gradient(to left, rgba(244, 67, 54, 0.7), transparent) !important; }
+        .put-volume-8 { background: linear-gradient(to left, rgba(244, 67, 54, 0.8), transparent) !important; }
+        .put-volume-9 { background: linear-gradient(to left, rgba(244, 67, 54, 0.9), transparent) !important; }
+        .put-volume-10 { background: linear-gradient(to left, rgba(244, 67, 54, 1.0), transparent) !important; }
+
+        /* Navigation Buttons */
+        .navigation-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.75rem 0.5rem;
+            border: none;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        .nav-btn i {
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .btn-text {
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                gap: 0.25rem;
+            }
+            
+            .nav-btn {
+                padding: 0.5rem 0.25rem;
+                min-width: 60px;
+            }
+            
+            .nav-btn i {
+                font-size: 1rem;
+            }
+            
+            .btn-text {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .btn-text {
+                display: none;
+            }
+            
+            .nav-btn {
+                padding: 0.75rem 0.5rem;
+            }
+            
+            .nav-btn i {
+                font-size: 1.2rem;
+                margin-bottom: 0;
+            }
+        }
+
+        /* Add bottom padding to main content */
+        main {
+            padding-bottom: 100px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+
+    <header class="main-header">
+        <h1 class="header-title">BankNifty OI-LTP Chain</h1>
+        {% if futures_info %}
+        <div class="mt-2">
+            <small class="text-muted">
+                Current: {{ futures_info.current.symbol }} (Exp: {{ futures_info.current.expiry_date }}) | 
+                Next: {{ futures_info.next.symbol }} (Exp: {{ futures_info.next.expiry_date }})
+            </small>
+        </div>
+        {% endif %}
+    </header>
+
+    <main class="container-fluid">
+        <div class="glass-card text-center">
+            <div class="mb-3">
+                <strong>Last Updated:</strong> {{ last_updated }}
+            </div>
+            <div>
+                <span class="expiry-badge bg-success">Current: {{ expiry_dates[0].date }}</span>
+                <span class="expiry-badge bg-secondary">Next: {{ expiry_dates[1].date }}</span>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="table-responsive">
+                <table class="table table-dark table-bordered table-sm text-center">
+                    <thead>
+                        <tr>
+                            <th>Call Volume</th>
+                            <th>Call LTP</th>
+                            <th>Strike</th>
+                            <th>Put LTP</th>
+                            <th>Put Volume</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set spot_inserted = [] %}
+                        {% for row in option_ltp_chain %}
+                            {% if spot_inserted|length == 0 and row.strike > spot_price %}
+                                <tr>
+                                    <td colspan="5" class="spot-price-box">
+                                        🏦 BankNifty Spot: {{ spot_price }}
+                                    </td>
+                                </tr>
+                                {% if spot_inserted.append(1) %}{% endif %}
+                            {% endif %}
+                            <tr>
+                                <td class="call-volume {{ row.call_volume_class }}">{{ row.call_volume_display }}</td>
+                                <td class="call-ltp">
+                                    {% if row.call_ltp > 0 %}
+                                        {{ "%.2f"|format(row.call_ltp) }}
+                                    {% else %}-{% endif %}
+                                </td>
+                                <td class="strike-price
+                                    {% if row.strike == highest_volume_strike %} highest-volume-strike {% endif %}
+                                    {% if row.strike % 500 == 0 %} every-500-strike {% endif %}">
+                                    {{ row.strike }}
+                                </td>
+                                <td class="put-ltp">
+                                    {% if row.put_ltp > 0 %}
+                                        {{ "%.2f"|format(row.put_ltp) }}
+                                    {% else %}-{% endif %}
+                                </td>
+                                <td class="put-volume {{ row.put_volume_class }}">{{ row.put_volume_display }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons">
+        <div class="nav-container">
+            <a href="/" class="nav-btn btn-secondary">
+                <i class="fas fa-home"></i>
+                <span class="btn-text">Home</span>
+            </a>
+            <a href="/trade" class="nav-btn btn-danger">
+                <i class="fas fa-chart-line"></i>
+                <span class="btn-text">Trade</span>
+            </a>
+            <a href="/option_chain_history" class="nav-btn btn-info">
+                <i class="fas fa-history"></i>
+                <span class="btn-text">History</span>
+            </a>
+            <a href="/futures-config" class="nav-btn btn-warning">
+                <i class="fas fa-cog"></i>
+                <span class="btn-text">Config</span>
+            </a>
+            <button class="nav-btn btn-primary" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i>
+                <span class="btn-text">Refresh</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option Chain History</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background: #0f1419; color: #fff; font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(255,255,255,0.05); border-radius: 20px; box-shadow: 0 8px 32px rgba(31,38,135,0.37); padding: 2rem; margin-bottom: 2rem; }
+        .table-dark { background-color: rgba(26,31,46,0.8) !important; color: #fff; }
+        .highlighted-strike { background-color: #ffeb3b !important; font-weight: bold !important; border: 2px solid #ff9800 !important; color: #333 !important; }
+        .every-500-strike { background-color: rgba(33, 150, 243, 0.15) !important; border-left: 2px solid #2196f3 !important; border-right: 2px solid #2196f3 !important; font-weight: bold !important; color: #ffffff !important; }
+
+        /* Call side green gradient styles */
+        .call-chg-oi-1 { background: linear-gradient(to right, rgba(76, 175, 80, 0.1), transparent) !important; }
+        .call-chg-oi-2 { background: linear-gradient(to right, rgba(76, 175, 80, 0.2), transparent) !important; }
+        .call-chg-oi-3 { background: linear-gradient(to right, rgba(76, 175, 80, 0.3), transparent) !important; }
+        .call-chg-oi-4 { background: linear-gradient(to right, rgba(76, 175, 80, 0.4), transparent) !important; }
+        .call-chg-oi-5 { background: linear-gradient(to right, rgba(76, 175, 80, 0.5), transparent) !important; }
+        .call-chg-oi-6 { background: linear-gradient(to right, rgba(76, 175, 80, 0.6), transparent) !important; }
+        .call-chg-oi-7 { background: linear-gradient(to right, rgba(76, 175, 80, 0.7), transparent) !important; }
+        .call-chg-oi-8 { background: linear-gradient(to right, rgba(76, 175, 80, 0.8), transparent) !important; }
+        .call-chg-oi-9 { background: linear-gradient(to right, rgba(76, 175, 80, 0.9), transparent) !important; }
+        .call-chg-oi-10 { background: linear-gradient(to right, rgba(76, 175, 80, 1.0), transparent) !important; }
+
+        .call-oi-1 { background: linear-gradient(to right, rgba(139, 195, 74, 0.1), transparent) !important; }
+        .call-oi-2 { background: linear-gradient(to right, rgba(139, 195, 74, 0.2), transparent) !important; }
+        .call-oi-3 { background: linear-gradient(to right, rgba(139, 195, 74, 0.3), transparent) !important; }
+        .call-oi-4 { background: linear-gradient(to right, rgba(139, 195, 74, 0.4), transparent) !important; }
+        .call-oi-5 { background: linear-gradient(to right, rgba(139, 195, 74, 0.5), transparent) !important; }
+        .call-oi-6 { background: linear-gradient(to right, rgba(139, 195, 74, 0.6), transparent) !important; }
+        .call-oi-7 { background: linear-gradient(to right, rgba(139, 195, 74, 0.7), transparent) !important; }
+        .call-oi-8 { background: linear-gradient(to right, rgba(139, 195, 74, 0.8), transparent) !important; }
+        .call-oi-9 { background: linear-gradient(to right, rgba(139, 195, 74, 0.9), transparent) !important; }
+        .call-oi-10 { background: linear-gradient(to right, rgba(139, 195, 74, 1.0), transparent) !important; }
+
+        /* Put side red gradient styles */
+        .put-chg-oi-1 { background: linear-gradient(to left, rgba(244, 67, 54, 0.1), transparent) !important; }
+        .put-chg-oi-2 { background: linear-gradient(to left, rgba(244, 67, 54, 0.2), transparent) !important; }
+        .put-chg-oi-3 { background: linear-gradient(to left, rgba(244, 67, 54, 0.3), transparent) !important; }
+        .put-chg-oi-4 { background: linear-gradient(to left, rgba(244, 67, 54, 0.4), transparent) !important; }
+        .put-chg-oi-5 { background: linear-gradient(to left, rgba(244, 67, 54, 0.5), transparent) !important; }
+        .put-chg-oi-6 { background: linear-gradient(to left, rgba(244, 67, 54, 0.6), transparent) !important; }
+        .put-chg-oi-7 { background: linear-gradient(to left, rgba(244, 67, 54, 0.7), transparent) !important; }
+        .put-chg-oi-8 { background: linear-gradient(to left, rgba(244, 67, 54, 0.8), transparent) !important; }
+        .put-chg-oi-9 { background: linear-gradient(to left, rgba(244, 67, 54, 0.9), transparent) !important; }
+        .put-chg-oi-10 { background: linear-gradient(to left, rgba(244, 67, 54, 1.0), transparent) !important; }
+
+        .put-oi-1 { background: linear-gradient(to left, rgba(233, 30, 99, 0.1), transparent) !important; }
+        .put-oi-2 { background: linear-gradient(to left, rgba(233, 30, 99, 0.2), transparent) !important; }
+        .put-oi-3 { background: linear-gradient(to left, rgba(233, 30, 99, 0.3), transparent) !important; }
+        .put-oi-4 { background: linear-gradient(to left, rgba(233, 30, 99, 0.4), transparent) !important; }
+        .put-oi-5 { background: linear-gradient(to left, rgba(233, 30, 99, 0.5), transparent) !important; }
+        .put-oi-6 { background: linear-gradient(to left, rgba(233, 30, 99, 0.6), transparent) !important; }
+        .put-oi-7 { background: linear-gradient(to left, rgba(233, 30, 99, 0.7), transparent) !important; }
+        .put-oi-8 { background: linear-gradient(to left, rgba(233, 30, 99, 0.8), transparent) !important; }
+        .put-oi-9 { background: linear-gradient(to left, rgba(233, 30, 99, 0.9), transparent) !important; }
+        .put-oi-10 { background: linear-gradient(to left, rgba(233, 30, 99, 1.0), transparent) !important; }
+
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="glass-card">
+            <h2>Option Chain History for {{ date_str }}</h2>
+            <form method="get" class="mb-3">
+                <label for="date">Select Date:</label>
+                <input type="date" id="date" name="date" value="{{ date_str }}">
+                <button type="submit" class="btn btn-primary btn-sm">Go</button>
+            </form>
+            {% if sorted_times %}
+                <ul class="nav nav-tabs mb-3" id="snapshotTabs" role="tablist">
+                    {% for t in sorted_times %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if loop.first %}active{% endif %}" id="tab-{{ loop.index0 }}" data-bs-toggle="tab" data-bs-target="#snap-{{ loop.index0 }}" type="button" role="tab">{{ t }}</button>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="tab-content" id="snapshotTabsContent">
+                    {% for t in sorted_times %}
+                    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="snap-{{ loop.index0 }}" role="tabpanel">
+                        <div class="table-responsive">
+                        <table class="table table-dark table-bordered table-sm text-nowrap">
+                            <thead>
+                                <tr>
+                                    <th colspan="2" class="text-center">CALL Options</th>
+                                    <th class="text-center">Strike</th>
+                                    <th colspan="2" class="text-center">PUT Options</th>
+                                </tr>
+                                <tr>
+                                    <th>Call ChgOI</th>
+                                    <th>Call OI</th>
+                                    <th class="text-center">Price</th>
+                                    <th>Put OI</th>
+                                    <th>Put ChgOI</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in grouped[t] %}
+                                {% set strike_classes = [] %}
+                                {% if row.highlighted == '1' %}
+                                    {% set _ = strike_classes.append('highlighted-strike') %}
+                                {% endif %}
+                                {% if row.every_500 == '1' %}
+                                    {% set _ = strike_classes.append('every-500-strike') %}
+                                {% endif %}
+                                <tr>
+                                    <td class="{{ row.call_chg_oi_class }}">{{ row.call_chg_oi }}</td>
+                                    <td class="{{ row.call_oi_class }}">{{ row.call_oi }}</td>
+                                    <td class="text-center fw-bold {{ ' '.join(strike_classes) }}">{{ row.strike }}</td>
+                                    <td class="{{ row.put_oi_class }}">{{ row.put_oi }}</td>
+                                    <td class="{{ row.put_chg_oi_class }}">{{ row.put_chg_oi }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-warning">No data available for this date.</div>
+            {% endif %}
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

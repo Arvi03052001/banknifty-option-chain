@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Strike Details - {{ symbol }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="10">
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom Theme -->
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --dark-bg: #0f1419;
+            --card-bg: #1a1f2e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8c1;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.37);
+            --shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+        }
+
+        .animated-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #0f1419, #1a1f2e, #2d3748);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: var(--shadow-light);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .futures-label {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+        }
+
+        .futures-value {
+            font-size: 2rem;
+            font-weight: 600;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-secondary {
+            background-color: #444 !important;
+            border: none;
+        }
+
+        .table {
+            color: var(--text-primary);
+        }
+
+        .table th {
+            color: var(--text-secondary);
+        }
+
+        .chart-container {
+            height: 400px;
+            width: 100%;
+        }
+
+        .date-filter-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            border-radius: 10px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .quick-date-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .quick-date-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .quick-date-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .error-message {
+            background: var(--danger-gradient);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .futures-value {
+                font-size: 1.5rem;
+                text-align: center;
+            }
+
+            .futures-label {
+                font-size: 1rem;
+                text-align: center;
+            }
+
+            .glass-card {
+                padding: 1rem;
+            }
+
+            .date-filter-card {
+                padding: 1rem;
+            }
+
+            .table-responsive {
+                font-size: 0.85rem;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+
+            .quick-date-buttons {
+                justify-content: center;
+            }
+
+            .quick-date-btn {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="animated-bg"></div>
+
+<div class="container my-3 px-3">
+    <div class="glass-card">
+        <h2 class="futures-value text-center">Strike Details: {{ symbol }}</h2>
+        {% if futures_info %}
+        <div class="text-center mb-3">
+            <small class="text-muted">
+                Current: {{ futures_info.current.symbol }} | Next: {{ futures_info.next.symbol }}
+            </small>
+        </div>
+        {% endif %}
+        <a href="/trade" class="btn btn-secondary w-100 mb-3">&larr; Back to Trade Page</a>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="date-filter-card">
+        <form id="dateForm" method="GET" action="/strike-details/{{ option_type }}/{{ strike }}">
+            <div class="row align-items-end">
+                <div class="col-md-4 mb-3">
+                    <label for="dateInput" class="form-label">
+                        <i class="fas fa-calendar"></i> Select Date
+                    </label>
+                    <input type="date" 
+                           class="form-control" 
+                           id="dateInput" 
+                           name="date" 
+                           value="{{ selected_date }}"
+                           max="{{ selected_date }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Load Data
+                    </button>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <button type="button" class="btn btn-secondary w-100" onclick="loadToday()">
+                        <i class="fas fa-calendar-day"></i> Today
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Quick Date Buttons -->
+            <div class="quick-date-buttons">
+                <button type="button" class="quick-date-btn" onclick="loadDate(-1)">Yesterday</button>
+                <button type="button" class="quick-date-btn" onclick="loadDate(-2)">2 Days Ago</button>
+                <button type="button" class="quick-date-btn" onclick="loadDate(-3)">3 Days Ago</button>
+                <button type="button" class="quick-date-btn" onclick="loadDate(-7)">1 Week Ago</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Error Message -->
+    {% if error_message %}
+    <div class="error-message">
+        <h4><i class="fas fa-exclamation-triangle"></i> No Data Available</h4>
+        <p>{{ error_message }}</p>
+        <small>Try selecting a different date when the market was open.</small>
+    </div>
+    {% endif %}
+
+    {% if rows %}
+    <div class="glass-card">
+        <h4 class="futures-label text-center">Price Data for {{ selected_date }} ({{ rows|length }} candles)</h4>
+        <div class="table-responsive mt-3">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Open</th>
+                        <th>High</th>
+                        <th>Low</th>
+                        <th>Close</th>
+                        <th>HA VWAP</th>
+                        <th class="d-none d-md-table-cell">ATR(9)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        <td class="fw-bold">{{ row.time }}</td>
+                        <td>{{ '%.2f'|format(row.open) }}</td>
+                        <td class="text-success">{{ '%.2f'|format(row.high) }}</td>
+                        <td class="text-danger">{{ '%.2f'|format(row.low) }}</td>
+                        <td>{{ '%.2f'|format(row.close) }}</td>
+                        <td class="text-warning">{{ '%.2f'|format(row.ha_vwap) }}</td>
+                        <td class="d-none d-md-table-cell">{{ '%.2f'|format(row.atr) if row.atr == row.atr else '-' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="text-center text-muted">No data available for today.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if rows %}
+    <div class="glass-card">
+        <h4 class="futures-label text-center">Price Chart</h4>
+        <div class="chart-container" style="min-height: 300px;">
+            <canvas id="strikeChart"></canvas>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+
+<!-- JS Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Date manipulation functions
+    function loadToday() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('dateInput').value = today;
+        document.getElementById('dateForm').submit();
+    }
+
+    function loadDate(daysOffset) {
+        const date = new Date();
+        date.setDate(date.getDate() + daysOffset);
+        const dateString = date.toISOString().split('T')[0];
+        document.getElementById('dateInput').value = dateString;
+        document.getElementById('dateForm').submit();
+    }
+</script>
+
+{% if rows %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('strikeChart').getContext('2d');
+        const labels = [{% for row in rows %}"{{ row.time }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+        
+        // OHLC Data for candlesticks
+        const ohlcData = [
+            {% for row in rows %}
+            {
+                open: {{ row.open }},
+                high: {{ row.high }},
+                low: {{ row.low }},
+                close: {{ row.close }}
+            }{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        ];
+        
+        const vwaps = [{% for row in rows %}{{ row.ha_vwap }}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+        // Use OHLC times as x-axis labels
+        const candleLabels = labels; // Already from OHLC rows
+
+        // Compute y-axis min/max from OHLC data
+        const allHighs = ohlcData.map(c => c.high);
+        const allLows = ohlcData.map(c => c.low);
+        const yMin = Math.min(...allLows);
+        const yMax = Math.max(...allHighs);
+
+        // Create a base bar chart for alignment
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: candleLabels,
+                datasets: [
+                    {
+                        label: 'HA VWAP',
+                        data: vwaps,
+                        type: 'line',
+                        borderColor: '#ffa500',
+                        backgroundColor: 'transparent',
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#ffa500',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1,
+                        borderWidth: 3,
+                        order: 2
+                    },
+                    {
+                        label: 'Candles',
+                        data: ohlcData.map((c, i) => 0), // dummy, we draw manually
+                        backgroundColor: 'rgba(0,0,0,0)',
+                        borderColor: 'rgba(0,0,0,0)',
+                        borderWidth: 0,
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#fff',
+                            font: { 
+                                family: 'Inter',
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: '#444',
+                        borderWidth: 1,
+                        titleFont: { 
+                            family: 'Inter',
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: { 
+                            family: 'Inter',
+                            size: 12
+                        },
+                        callbacks: {
+                            beforeBody: function(context) {
+                                const index = context[0].dataIndex;
+                                const candle = ohlcData[index];
+                                const vwap = vwaps[index];
+                                
+                                return [
+                                    `Open: ${candle.open.toFixed(2)}`,
+                                    `High: ${candle.high.toFixed(2)}`,
+                                    `Low: ${candle.low.toFixed(2)}`,
+                                    `Close: ${candle.close.toFixed(2)}`,
+                                    `HA VWAP: ${vwap.toFixed(2)}`
+                                ];
+                            },
+                            label: function() {
+                                return ''; // Hide default label
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: yMin,
+                        max: yMax,
+                        ticks: {
+                            color: '#fff',
+                            font: {
+                                family: 'Inter'
+                            },
+                            callback: function(value) {
+                                return value.toFixed(2);
+                            }
+                        },
+                        grid: { 
+                            color: 'rgba(255, 255, 255, 0.1)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)'
+                        },
+                        border: {
+                            color: 'rgba(255, 255, 255, 0.2)'
+                        }
+                    },
+                    x: {
+                        type: 'category',
+                        ticks: {
+                            color: '#fff',
+                            font: {
+                                family: 'Inter'
+                            },
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        grid: { 
+                            color: 'rgba(255, 255, 255, 0.1)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)'
+                        },
+                        border: {
+                            color: 'rgba(255, 255, 255, 0.2)'
+                        }
+                    }
+                },
+                animation: {
+                    onComplete: function() {
+                        drawCandlesticks();
+                    }
+                }
+            }
+        });
+
+        function drawCandlesticks() {
+            const chartArea = chart.chartArea;
+            const xScale = chart.scales.x;
+            const yScale = chart.scales.y;
+            
+            // Dynamically calculate candle width based on available space
+            const n = ohlcData.length;
+            const chartWidth = chartArea.right - chartArea.left;
+            const maxCandleWidth = 18;
+            const minCandleWidth = 4;
+            let candleWidth = Math.max(minCandleWidth, Math.min(maxCandleWidth, chartWidth / (n * 1.5)));
+            const wickWidth = 1;
+            
+            ohlcData.forEach((candle, index) => {
+                let x = xScale.getPixelForValue(index);
+                // Clamp x to chart area
+                x = Math.max(chartArea.left + candleWidth/2, Math.min(chartArea.right - candleWidth/2, x));
+                const highY = yScale.getPixelForValue(candle.high);
+                const lowY = yScale.getPixelForValue(candle.low);
+                const openY = yScale.getPixelForValue(candle.open);
+                const closeY = yScale.getPixelForValue(candle.close);
+                
+                const isBullish = candle.close >= candle.open;
+                const bodyTop = Math.min(openY, closeY);
+                const bodyBottom = Math.max(openY, closeY);
+                const bodyHeight = Math.abs(closeY - openY);
+                
+                // Draw the wick (high-low line)
+                ctx.strokeStyle = isBullish ? '#00ff88' : '#ff4757';
+                ctx.lineWidth = wickWidth;
+                ctx.beginPath();
+                ctx.moveTo(x, highY);
+                ctx.lineTo(x, lowY);
+                ctx.stroke();
+                
+                // Draw the candle body
+                if (bodyHeight > 0) {
+                    if (isBullish) {
+                        // Bullish: filled green rectangle with border
+                        ctx.fillStyle = '#00ff88';
+                        ctx.fillRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+                        ctx.strokeStyle = '#00ff88';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+                    } else {
+                        // Bearish: filled red rectangle
+                        ctx.fillStyle = '#ff4757';
+                        ctx.fillRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+                        ctx.strokeStyle = '#ff4757';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+                    }
+                } else {
+                    // Doji: draw a horizontal line
+                    ctx.strokeStyle = isBullish ? '#00ff88' : '#ff4757';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x - candleWidth/2, openY);
+                    ctx.lineTo(x + candleWidth/2, openY);
+                    ctx.stroke();
+                }
+            });
+        }
+
+        // Redraw candlesticks when chart updates
+        const originalDraw = Chart.prototype.draw;
+        Chart.prototype.draw = function() {
+            originalDraw.apply(this, arguments);
+            if (this.canvas === ctx.canvas) {
+                drawCandlesticks();
+            }
+        };
+    });
+</script>
+{% endif %}
+</body>
+</html>

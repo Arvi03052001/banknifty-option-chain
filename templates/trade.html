@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="10">
+    <title>BankNifty Trading Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --danger-gradient: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+            --warning-gradient: linear-gradient(135deg, #FDBB2D 0%, #22C1C3 100%);
+            --neutral-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --dark-bg: #0f1419;
+            --card-bg: #1a1f2e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8c1;
+            --border-color: #2d3748;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --shadow-light: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --shadow-heavy: 0 20px 40px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(45deg, #0f1419, #1a1f2e, #2d3748);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .main-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .price-display {
+            background: var(--success-gradient);
+            border-radius: 24px;
+            padding: 2.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+
+        .price-value-link {
+            text-decoration: none !important;
+            color: inherit;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+        }
+
+        .price-value-link:hover .price-value {
+            transform: scale(1.05);
+            text-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        .price-display::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(56, 239, 125, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(56, 239, 125, 0.5); }
+        }
+
+        .price-label {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .price-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .price-updated {
+            font-size: 0.95rem;
+            opacity: 0.8;
+        }
+
+        .vwap-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .vwap-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .vwap-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .ha-vwap-card::before {
+            background: var(--warning-gradient);
+        }
+
+        .vwap-header {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .vwap-value {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .ha-vwap-value {
+            background: var(--warning-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .vwap-details {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .price-above {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .price-below {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .aligned {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .divergent {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .signal-strong_above {
+            background: var(--success-gradient);
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .signal-strong_below {
+            background: var(--danger-gradient);
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .signal-mixed {
+            background: var(--warning-gradient);
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .strategy-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .strategy-section:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .section-header {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .modern-table {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .modern-table th {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modern-table td {
+            border: none;
+            padding: 1rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .modern-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .modern-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-link {
+            color: #11998e;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .table-link:hover {
+            color: #38ef7d;
+            text-decoration: underline;
+        }
+
+        .action-buttons {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        .floating-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: var(--primary-gradient);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-light);
+        }
+
+        .floating-btn:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .back-btn {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .alert-modern {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            border-left-color: #38ef7d;
+        }
+
+        .alert-danger {
+            border-left-color: #fc466b;
+        }
+
+        .alert-warning {
+            border-left-color: #FDBB2D;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .vwap-container,
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-title {
+                font-size: 2rem;
+            }
+            
+            .price-value {
+                font-size: 2.5rem;
+            }
+            
+            .vwap-value {
+                font-size: 2rem;
+            }
+            
+            .strategy-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .section-header {
+                font-size: 1.2rem;
+                margin-bottom: 1rem;
+            }
+            
+            .section-icon {
+                width: 30px;
+                height: 30px;
+            }
+            
+            .modern-table th,
+            .modern-table td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.8rem;
+            }
+            
+            .modern-table {
+                border-radius: 10px;
+            }
+            
+            .price-display {
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .price-label {
+                font-size: 1rem;
+            }
+            
+            .back-btn {
+                bottom: 1rem;
+                left: 1rem;
+                padding: 0.75rem 1.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .action-buttons {
+                bottom: 1rem;
+                right: 1rem;
+            }
+            
+            .floating-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header-title {
+                font-size: 1.5rem;
+            }
+            
+            .header-subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .price-value {
+                font-size: 2rem;
+            }
+            
+            .strategy-section {
+                padding: 0.75rem;
+            }
+            
+            .modern-table th,
+            .modern-table td {
+                padding: 0.4rem 0.2rem;
+                font-size: 0.75rem;
+            }
+            
+            .modern-table th:nth-child(3),
+            .modern-table td:nth-child(3),
+            .modern-table th:nth-child(4),
+            .modern-table td:nth-child(4) {
+                display: none;
+            }
+            
+            .section-header {
+                font-size: 1rem;
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+            
+            .status-badge {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+            }
+            
+            .alert-modern {
+                padding: 1rem;
+            }
+            
+            .alert-modern h5 {
+                font-size: 1rem;
+            }
+            
+            .alert-modern p {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Navigation Buttons */
+        .navigation-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.75rem 0.5rem;
+            border: none;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        .nav-btn i {
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .btn-text {
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                gap: 0.25rem;
+            }
+            
+            .nav-btn {
+                padding: 0.5rem 0.25rem;
+                min-width: 60px;
+            }
+            
+            .nav-btn i {
+                font-size: 1rem;
+            }
+            
+            .btn-text {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .btn-text {
+                display: none;
+            }
+            
+            .nav-btn {
+                padding: 0.75rem 0.5rem;
+            }
+            
+            .nav-btn i {
+                font-size: 1.2rem;
+                margin-bottom: 0;
+            }
+        }
+
+        /* Add bottom padding to container */
+        .container {
+            padding-bottom: 100px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: #38ef7d;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <header class="main-header">
+        <div class="container">
+            <h1 class="header-title">BankNifty Trading Dashboard</h1>
+            <p class="header-subtitle">Real-time market analysis & trading signals</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Futures Price Display -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="price-display fade-in h-100 d-flex flex-column justify-content-center align-items-center">
+                    <div class="price-label">
+                        <i class="fas fa-chart-line"></i> BANKNIFTY FUTURES PRICE
+                        <br><small>{{ futures_symbol }}</small>
+                    </div>
+                    <a href="{{ url_for('futures_details') }}" class="price-value-link">
+                        <span class="price-value">{{ futures_price }}</span>
+                    </a>
+                    <div class="price-updated">
+                        <i class="fas fa-clock"></i> Last Updated: {{ last_updated }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="price-display fade-in h-100 d-flex flex-column justify-content-center align-items-center" style="background: var(--warning-gradient);">
+                    <div class="price-label">
+                        <i class="fas fa-chart-bar"></i> Heikin Ashi VWAP
+                        <br><small>({{ timeframe }}, Heikin Ashi, Close)</small>
+                    </div>
+                    <div class="price-value">{{ "%.2f"|format(ha_vwap) }}</div>
+                    <div class="price-updated">
+                        <span class="status-badge price-{{ ha_price_position }}">
+                            {{ ha_price_position | upper }} HA-VWAP
+                        </span>
+                        <br>by {{ "%.2f"|format(price_ha_vwap_diff) }} points
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trading Parameters Section -->
+        <div class="strategy-section fade-in">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                Trading Parameters
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-3">
+                        <strong>VWAP Alignment:</strong> 
+                        <span class="status-badge {{ vwap_alignment }}">
+                            {% if vwap_alignment == "aligned" %}
+                                <i class="fas fa-check"></i> ALIGNED
+                            {% else %}
+                                <i class="fas fa-exclamation-triangle"></i> DIVERGENT
+                            {% endif %}
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-3">
+                        <strong>Trading Signal:</strong> 
+                        <span class="status-badge signal-{{ vwap_signal }}">
+                            {% if vwap_signal == "strong_above" %}
+                                <i class="fas fa-arrow-up"></i> STRONG BULLISH
+                            {% elif vwap_signal == "strong_below" %}
+                                <i class="fas fa-arrow-down"></i> STRONG BEARISH
+                            {% else %}
+                                <i class="fas fa-exchange-alt"></i> MIXED SIGNALS
+                            {% endif %}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signal Section -->
+        <div class="strategy-section fade-in">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                Trading Signals
+            </div>
+            <div class="alert-modern alert-{% if vwap_signal == 'strong_above' %}success{% elif vwap_signal == 'strong_below' %}danger{% else %}warning{% endif %}">
+                <h5><i class="fas fa-chart-line"></i> VWAP Strategy Analysis</h5>
+                <p class="mb-0">
+                    {% if vwap_signal == "strong_above" %}
+                        Both Standard and Heikin Ashi VWAP confirm bullish momentum. Consider buying on pullbacks toward either VWAP level with tight risk management.
+                    {% elif vwap_signal == "strong_below" %}
+                        Both Standard and Heikin Ashi VWAP confirm bearish momentum. Consider selling on rallies toward either VWAP level with appropriate stop losses.
+                    {% else %}
+                        VWAPs are showing mixed signals. Standard VWAP suggests {{ price_position }} bias while Heikin Ashi VWAP suggests {{ ha_price_position }} bias. Consider reducing position size or waiting for alignment.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Order Management Section -->
+        <div class="strategy-section fade-in">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                Order Management
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="alert-modern">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-tools"></i> Advanced order management interface</span>
+                            <span class="loading-spinner"></span>
+                        </div>
+                        <small class="text-muted">Feature coming soon with real-time order placement capabilities</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Options Section -->
+        <div class="strategy-section fade-in">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                Options with LTP below ₹200
+            </div>
+            
+            <div class="options-grid">
+                <!-- Call Options -->
+                <div>
+                    <h5 class="mb-3"><i class="fas fa-arrow-up text-success"></i> Call Options (LTP &lt; ₹200)</h5>
+                    <div class="modern-table">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Strike Price</th>
+                                    <th>Call LTP</th>
+                                    <th>HA-VWAP</th>
+                                    <th>ATR(9)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for opt in call_lt_200 %}
+                                <tr>
+                                    <td><a href="{{ url_for('strike_details', option_type='CE', strike=opt.strike) }}" class="table-link">{{ opt.strike }}</a></td>
+                                    <td>₹{{ opt.ltp }}</td>
+                                    <td>₹{{ "%.2f"|format(opt.ha_vwap) }}</td>
+                                    <td>₹{{ "%.2f"|format(opt.atr) }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="4">No Call options with LTP below ₹200</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Put Options -->
+                <div>
+                    <h5 class="mb-3"><i class="fas fa-arrow-down text-danger"></i> Put Options (LTP &lt; ₹200)</h5>
+                    <div class="modern-table">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Strike Price</th>
+                                    <th>Put LTP</th>
+                                    <th>HA-VWAP</th>
+                                    <th>ATR(9)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for opt in put_lt_200 %}
+                                <tr>
+                                    <td><a href="{{ url_for('strike_details', option_type='PE', strike=opt.strike) }}" class="table-link">{{ opt.strike }}</a></td>
+                                    <td>₹{{ opt.ltp }}</td>
+                                    <td>₹{{ "%.2f"|format(opt.ha_vwap) }}</td>
+                                    <td>₹{{ "%.2f"|format(opt.atr) }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="4">No Put options with LTP below ₹200</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons">
+        <div class="nav-container">
+            <a href="/" class="nav-btn btn-secondary">
+                <i class="fas fa-home"></i>
+                <span class="btn-text">Home</span>
+            </a>
+            <a href="/oi-ltp" class="nav-btn btn-success">
+                <i class="fas fa-table"></i>
+                <span class="btn-text">OI-LTP</span>
+            </a>
+            <a href="/option_chain_history" class="nav-btn btn-info">
+                <i class="fas fa-history"></i>
+                <span class="btn-text">History</span>
+            </a>
+            <a href="/futures-config" class="nav-btn btn-warning">
+                <i class="fas fa-cog"></i>
+                <span class="btn-text">Config</span>
+            </a>
+            <button class="nav-btn btn-primary" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i>
+                <span class="btn-text">Refresh</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add smooth scrolling and modern interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add fade-in animation to elements
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // Observe all strategy sections
+            document.querySelectorAll('.strategy-section').forEach(section => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(30px)';
+                section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(section);
+            });
+
+            // Add loading state simulation
+            setTimeout(() => {
+                document.querySelectorAll('.loading-spinner').forEach(spinner => {
+                    spinner.style.display = 'none';
+                });
+            }, 2000);
+        });
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                location.reload();
+            }
+            if (e.key === 'f' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                toggleFullscreen();
+            }
+        });
+
+        // Add smooth hover effects
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
