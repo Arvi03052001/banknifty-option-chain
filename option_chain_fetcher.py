@@ -124,82 +124,121 @@ def print_row(strike, call_data, put_data):
     print(f"{call_str} {strike:8.2f} {put_str}")
 
 def run_option_chain(return_data=False):
-    fyers = get_fyers_client()
+    try:
+        fyers = get_fyers_client()
 
-    # Get BankNifty Spot Price (Index)
-    spot_data = fyers.quotes({"symbols": "NSE:NIFTYBANK-INDEX"})
-    spot_ltp = spot_data["d"][0]["v"]["lp"]
+        # Get BankNifty Spot Price (Index) with error handling
+        try:
+            spot_data = fyers.quotes({"symbols": "NSE:NIFTYBANK-INDEX"})
+            print(f"[DEBUG] Spot data response: {spot_data}")
+            
+            if spot_data and spot_data.get("s") == "ok" and "d" in spot_data and spot_data["d"]:
+                spot_ltp = spot_data["d"][0]["v"]["lp"]
+            else:
+                print(f"[ERROR] Invalid spot data response: {spot_data}")
+                spot_ltp = 50000  # Fallback
+        except Exception as e:
+            print(f"[ERROR] Failed to get spot price: {e}")
+            spot_ltp = 50000
 
-    # Get BankNifty Futures Price (automatically uses current month)
-    future_symbol = get_current_futures_symbol()
-    future_data = fyers.quotes({"symbols": future_symbol})
-    future_ltp = future_data["d"][0]["v"]["lp"]
+        # Get BankNifty Futures Price with error handling
+        try:
+            future_symbol = get_current_futures_symbol()
+            future_data = fyers.quotes({"symbols": future_symbol})
+            print(f"[DEBUG] Futures data response: {future_data}")
+            
+            if future_data and future_data.get("s") == "ok" and "d" in future_data and future_data["d"]:
+                future_ltp = future_data["d"][0]["v"]["lp"]
+            else:
+                print(f"[ERROR] Invalid futures data response: {future_data}")
+                future_ltp = 50000  # Fallback
+        except Exception as e:
+            print(f"[ERROR] Failed to get futures price: {e}")
+            future_ltp = 50000
 
-    # Print both
-    print(f"\n📊 BankNifty - Spot : {spot_ltp:.2f}      BankNifty - Current FUT ({future_symbol}) : {future_ltp:.2f}")
+        # Print both
+        print(f"\n📊 BankNifty - Spot : {spot_ltp:.2f}      BankNifty - Current FUT ({future_symbol}) : {future_ltp:.2f}")
 
-    # Use correct symbol for optionchain
-    symbol = "NSE:NIFTYBANK-INDEX"
+        # Use correct symbol for optionchain
+        symbol = "NSE:NIFTYBANK-INDEX"
 
-    # Get available expiries
-    sample_data = {"symbol": symbol, "strikecount": 1}
-    sample_response = fyers.optionchain(data=sample_data)
+        # Get available expiries with error handling
+        try:
+            sample_data = {"symbol": symbol, "strikecount": 1}
+            sample_response = fyers.optionchain(data=sample_data)
+            print(f"[DEBUG] Option chain sample response: {sample_response}")
 
-    if sample_response.get("s") != "ok":
-        print(f"❌ Failed to get expiry list: {sample_response.get('message')}")
+            if sample_response.get("s") != "ok":
+                print(f"❌ Failed to get expiry list: {sample_response.get('message')}")
+                if return_data:
+                    return []
+                return
+
+            expiry_list = sample_response.get("data", {}).get("expiryData", [])
+            if len(expiry_list) < 2:
+                print("⚠️ Not enough expiry data available.")
+                if return_data:
+                    return []
+                return
+
+            expiry1 = expiry_list[0]["expiry"]
+            expiry2 = expiry_list[1]["expiry"]
+            print(f"\n📅 Expiries: {expiry_list[0]['date']} and {expiry_list[1]['date']}")
+
+            # Fetch option chain for both expiries
+            chain1 = fetch_option_chain_for_expiry(symbol, expiry1, fyers)
+            chain2 = fetch_option_chain_for_expiry(symbol, expiry2, fyers)
+            full_chain = chain1 + chain2
+
+            print(f"\n🔄 Fetched {len(full_chain)} option contracts from both expiries.")
+
+            # Process and display
+            combined = combine_option_chain_data(full_chain)
+            print_option_chain_table(combined)
+
+            # Create a list to store the organized data
+            organized_data = []
+            
+            all_strikes = set(combined.keys())
+            
+            for strike in sorted(all_strikes, reverse=True):  # reverse=True for descending order
+                call_data = combined[strike]["CALL"]
+                put_data = combined[strike]["PUT"]
+                
+                row = {
+                    'strike': strike,
+                    'call': {
+                        'oi': call_data['oi'],
+                        'chg_oi': call_data['chg_oi']  # This is the Change in OI
+                    },
+                    'put': {
+                        'oi': put_data['oi'], 
+                        'chg_oi': put_data['chg_oi']   # This is the Change in OI
+                    }
+                }
+                organized_data.append(row)
+            
+            if return_data:
+                return organized_data
+            
+            # Print the option chain (original terminal output)
+            print_header()
+            call_options = {strike: combined[strike]["CALL"] for strike in all_strikes}
+            put_options = {strike: combined[strike]["PUT"] for strike in all_strikes}
+            for strike in sorted(all_strikes, reverse=True):  # reverse=True for descending order
+                print_row(strike, call_options.get(strike), put_options.get(strike))
+                
+        except Exception as e:
+            print(f"[ERROR] Failed to get option chain data: {e}")
+            if return_data:
+                return []
+            return
+            
+    except Exception as e:
+        print(f"[ERROR] run_option_chain failed: {e}")
+        if return_data:
+            return []
         return
-
-    expiry_list = sample_response["data"].get("expiryData", [])
-    if len(expiry_list) < 2:
-        print("⚠️ Not enough expiry data available.")
-        return
-
-    expiry1 = expiry_list[0]["expiry"]
-    expiry2 = expiry_list[1]["expiry"]
-    print(f"\n📅 Expiries: {expiry_list[0]['date']} and {expiry_list[1]['date']}")
-
-    # Fetch option chain for both expiries
-    chain1 = fetch_option_chain_for_expiry(symbol, expiry1, fyers)
-    chain2 = fetch_option_chain_for_expiry(symbol, expiry2, fyers)
-    full_chain = chain1 + chain2
-
-    print(f"\n🔄 Fetched {len(full_chain)} option contracts from both expiries.")
-
-    # Process and display
-    combined = combine_option_chain_data(full_chain)
-    print_option_chain_table(combined)
-
-    # Create a list to store the organized data
-    organized_data = []
-    
-    all_strikes = set(combined.keys())
-    
-    for strike in sorted(all_strikes, reverse=True):  # reverse=True for descending order
-        call_data = combined[strike]["CALL"]
-        put_data = combined[strike]["PUT"]
-        
-        row = {
-            'strike': strike,
-            'call': {
-                'oi': call_data['oi'],
-                'chg_oi': call_data['chg_oi']  # This is the Change in OI
-            },
-            'put': {
-                'oi': put_data['oi'], 
-                'chg_oi': put_data['chg_oi']   # This is the Change in OI
-            }
-        }
-        organized_data.append(row)
-    
-    if return_data:
-        return organized_data
-    
-    # Print the option chain (original terminal output)
-    print_header()
-    call_options = {strike: combined[strike]["CALL"] for strike in all_strikes}
-    put_options = {strike: combined[strike]["PUT"] for strike in all_strikes}
-    for strike in sorted(all_strikes, reverse=True):  # reverse=True for descending order
-        print_row(strike, call_options.get(strike), put_options.get(strike))
 
 # Add this at the bottom of option_chain_fetcher.py
 
