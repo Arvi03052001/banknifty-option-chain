@@ -61,8 +61,8 @@ temp_*
 # data/
 # option_chain_snapshots/
 
-# Environment variables (keep token.txt as you mentioned it's safe)
-# token.txt
+# Environment variables and tokens
+token.txt
 
 # Qodo
 .qodo/
