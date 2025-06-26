@@ -142,32 +142,49 @@ def get_current_month_futures_symbol():
 
 @app.route('/')
 def index():
-    # Get the current timestamp in IST
-    last_updated = get_ist_time_string()
-    
-    # Get spot and futures prices
-    spot_price = get_spot_price()
-    futures_price = get_futures_price()
-    
-    # Get futures configuration info
-    futures_info = get_futures_info()
-    
-    # Get option chain data
-    option_chain = run_option_chain(return_data=True)
-    
-    # Find the closest strike to futures price
-    closest_strike = find_closest_strike(futures_price, option_chain)
-    
-    # Add color intensity classes
-    option_chain = add_color_classes(option_chain)
-    
-    return render_template('index.html',
-                         spot_price=spot_price,
-                         futures_price=futures_price,
-                         futures_info=futures_info,
-                         last_updated=last_updated,
-                         option_chain=option_chain,
-                         closest_strike=closest_strike)
+    try:
+        # Get the current timestamp in IST
+        last_updated = get_ist_time_string()
+        
+        # Get spot and futures prices with error handling
+        try:
+            spot_price = get_spot_price()
+        except Exception as e:
+            print(f"[ERROR] Failed to get spot price: {e}")
+            spot_price = 0
+        
+        try:
+            futures_price = get_futures_price()
+        except Exception as e:
+            print(f"[ERROR] Failed to get futures price: {e}")
+            futures_price = 0
+        
+        # Get futures configuration info
+        futures_info = get_futures_info()
+        
+        # Get option chain data with error handling
+        try:
+            option_chain = run_option_chain(return_data=True)
+        except Exception as e:
+            print(f"[ERROR] Failed to get option chain: {e}")
+            option_chain = []
+        
+        # Find the closest strike to futures price
+        closest_strike = find_closest_strike(futures_price, option_chain) if option_chain else None
+        
+        # Add color intensity classes
+        option_chain = add_color_classes(option_chain) if option_chain else []
+        
+        return render_template('index.html',
+                             spot_price=spot_price,
+                             futures_price=futures_price,
+                             futures_info=futures_info,
+                             last_updated=last_updated,
+                             option_chain=option_chain,
+                             closest_strike=closest_strike)
+    except Exception as e:
+        print(f"[ERROR] Index route failed: {e}")
+        return f"Service temporarily unavailable. Error: {str(e)}", 503
 
 @app.route('/oi-ltp')
 def oi_ltp():

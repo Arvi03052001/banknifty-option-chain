@@ -13,32 +13,42 @@ access_token = read_token()
 fyers = fyersModel.FyersModel(client_id=client_id, token=access_token, is_async=False, log_path="")
 
 def get_spot_price():
-    symbol = "NSE:NIFTYBANK-INDEX"
-    data = {"symbols": symbol}
-    res = fyers.quotes(data)
+    try:
+        symbol = "NSE:NIFTYBANK-INDEX"
+        data = {"symbols": symbol}
+        res = fyers.quotes(data)
 
-    # Add debug print
-    print("[DEBUG] get_spot_price() response:", res)
+        # Add debug print
+        print("[DEBUG] get_spot_price() response:", res)
 
-    if "d" in res and res["d"]:
-        return res["d"][0]["v"]["lp"]
-    else:
-        return 0
+        if res and "d" in res and res["d"] and len(res["d"]) > 0:
+            return res["d"][0]["v"]["lp"]
+        else:
+            print(f"[ERROR] Invalid spot price response: {res}")
+            return 50000  # Default fallback value for BankNifty
+    except Exception as e:
+        print(f"[ERROR] Failed to get spot price: {e}")
+        return 50000  # Default fallback value
 
 
 
 def get_futures_price():
-    symbol = get_current_futures_symbol()
-    data = {"symbols": symbol}
-    res = fyers.quotes(data)
+    try:
+        symbol = get_current_futures_symbol()
+        data = {"symbols": symbol}
+        res = fyers.quotes(data)
 
-    # Add debug print
-    print(f"[DEBUG] get_futures_price() for {symbol} response:", res)
+        # Add debug print
+        print(f"[DEBUG] get_futures_price() for {symbol} response:", res)
 
-    if "d" in res and res["d"]:
-        return res["d"][0]["v"]["lp"]
-    else:
-        return 0  # fallback
+        if res and "d" in res and res["d"] and len(res["d"]) > 0:
+            return res["d"][0]["v"]["lp"]
+        else:
+            print(f"[ERROR] Invalid futures price response: {res}")
+            return 50000  # Default fallback value for BankNifty futures
+    except Exception as e:
+        print(f"[ERROR] Failed to get futures price: {e}")
+        return 50000  # Default fallback value
 
 
 
