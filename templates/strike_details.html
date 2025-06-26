@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <title>Strike Details - {{ symbol }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="10">
-
+    
     <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -86,6 +85,38 @@
 
         .table th {
             color: var(--text-secondary);
+        }
+
+        .status-indicator {
+            font-size: 1.2rem;
+            filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.5));
+        }
+
+        .status-green {
+            color: #00ff88 !important;
+            animation: pulse-green 2s infinite;
+        }
+
+        .status-red {
+            color: #ff4757 !important;
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes pulse-red {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .status-tooltip {
+            position: relative;
+            cursor: help;
         }
 
         .chart-container {
@@ -214,6 +245,19 @@
             </small>
         </div>
         {% endif %}
+        <div class="mt-3 mb-3">
+            <div id="last-updated-display" class="text-center" style="
+                background: rgba(40, 167, 69, 0.1);
+                border: 1px solid rgba(40, 167, 69, 0.3);
+                border-radius: 10px;
+                padding: 8px 16px;
+                color: #28a745;
+                font-weight: 500;
+                font-size: 14px;
+            ">
+                <i class="fas fa-clock"></i> <strong>Last Updated:</strong> Loading...
+            </div>
+        </div>
         <a href="/trade" class="btn btn-secondary w-100 mb-3">&larr; Back to Trade Page</a>
     </div>
 
@@ -266,6 +310,31 @@
     {% if rows %}
     <div class="glass-card">
         <h4 class="futures-label text-center">Price Data for {{ selected_date }} ({{ rows|length }} candles)</h4>
+        
+        <!-- Status Legend -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="alert alert-info" style="background: rgba(102, 126, 234, 0.1); border: 1px solid rgba(102, 126, 234, 0.3); color: var(--text-primary);">
+                    <h6><i class="fas fa-info-circle"></i> Status Column Legend:</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <i class="fas fa-circle status-green"></i> <strong>Green Light:</strong> Open integer < HA VWAP integer AND Close integer > HA VWAP integer AND |Open - Close| ≤ 20 points
+                        </div>
+                        <div class="col-md-6">
+                            <i class="fas fa-circle status-red"></i> <strong>Red Light:</strong> Any condition not met
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <strong>Example:</strong> Open 79.50 (79) < HA VWAP 85.60 (85) ✓ AND Close 99.25 (99) > HA VWAP 85.60 (85) ✓ AND |79.50 - 99.25| = 19.75 ≤ 20 ✓ = Green Light<br/>
+                            <strong>Counter Example:</strong> Open 79.50 (79) < HA VWAP 85.60 (85) ✓ AND Close 100.25 (100) > HA VWAP 85.60 (85) ✓ BUT |79.50 - 100.25| = 20.75 > 20 ✗ = Red Light<br/>
+                            Hover over the status indicators for detailed calculations
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="table-responsive mt-3">
             <table class="table table-hover">
                 <thead>
@@ -277,6 +346,7 @@
                         <th>Close</th>
                         <th>HA VWAP</th>
                         <th class="d-none d-md-table-cell">ATR(9)</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -289,9 +359,24 @@
                         <td>{{ '%.2f'|format(row.close) }}</td>
                         <td class="text-warning">{{ '%.2f'|format(row.ha_vwap) }}</td>
                         <td class="d-none d-md-table-cell">{{ '%.2f'|format(row.atr) if row.atr == row.atr else '-' }}</td>
+                        <td class="text-center">
+                            {% if row.status %}
+                                <i class="fas fa-circle status-indicator status-green" 
+                                   data-bs-toggle="tooltip" 
+                                   data-bs-placement="top"
+                                   data-bs-html="true"
+                                   title="✅ <strong>All Conditions Met</strong><br/>Open: {{ '%.2f'|format(row.open) }} ({{ row.open|int }}) < HA VWAP: {{ '%.2f'|format(row.ha_vwap) }} ({{ row.ha_vwap|int }}) ✓<br/>Close: {{ '%.2f'|format(row.close) }} ({{ row.close|int }}) > HA VWAP: {{ '%.2f'|format(row.ha_vwap) }} ({{ row.ha_vwap|int }}) ✓<br/>|Open - Close|: |{{ '%.2f'|format(row.open) }} - {{ '%.2f'|format(row.close) }}| = {{ '%.2f'|format((row.open - row.close)|abs) }} ≤ 20 ✓"></i>
+                            {% else %}
+                                <i class="fas fa-circle status-indicator status-red" 
+                                   data-bs-toggle="tooltip" 
+                                   data-bs-placement="top"
+                                   data-bs-html="true"
+                                   title="❌ <strong>Condition Not Met</strong><br/>Need: Open integer ({{ row.open|int }}) < HA VWAP integer ({{ row.ha_vwap|int }}) AND Close integer ({{ row.close|int }}) > HA VWAP integer ({{ row.ha_vwap|int }}) AND |Open - Close| ≤ 20<br/>Current: |{{ '%.2f'|format(row.open) }} - {{ '%.2f'|format(row.close) }}| = {{ '%.2f'|format((row.open - row.close)|abs) }}"></i>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="7" class="text-center text-muted">No data available for today.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted">No data available for today.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -314,10 +399,301 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+    // Auto-update functionality
+    let updateInterval;
+    let isUpdating = false;
+    let lastUpdateTime = null;
+    let currentDate = '{{ selected_date }}';
+    let optionType = '{{ option_type }}';
+    let strike = {{ strike }};
+
+    function updateData() {
+        if (isUpdating) return;
+        isUpdating = true;
+        
+        console.log('Fetching strike details data from /api/strike-details-data...');
+
+        fetch(`/api/strike-details-data/${optionType}/${strike}?date=${currentDate}`)
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Strike details data received:', data);
+                if (data.success) {
+                    updatePageContent(data.data);
+                    lastUpdateTime = new Date();
+                    updateLastRefreshTime();
+                    clearUpdateError();
+                } else {
+                    console.error('Error fetching data:', data.error);
+                    showUpdateError('Server error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Network error:', error);
+                showUpdateError('Network error: ' + error.message);
+            })
+            .finally(() => {
+                isUpdating = false;
+            });
+    }
+
+    function updatePageContent(data) {
+        console.log('Updating strike details page content with:', data);
+        
+        // Update symbol display
+        const symbolElement = document.querySelector('.futures-value');
+        if (symbolElement) {
+            symbolElement.textContent = `Strike Details: ${data.symbol}`;
+        }
+
+        // Update data table if data exists
+        if (data.rows && data.rows.length > 0) {
+            updateDataTable(data.rows);
+            updateChart(data.rows);
+            
+            // Hide error message and show data
+            const errorMessage = document.querySelector('.error-message');
+            if (errorMessage) {
+                errorMessage.style.display = 'none';
+            }
+            
+            const dataCards = document.querySelectorAll('.glass-card:not(:first-child)');
+            dataCards.forEach(card => {
+                card.style.display = 'block';
+            });
+        } else if (data.error_message) {
+            // Show error message and hide data
+            showDataError(data.error_message);
+            
+            const dataCards = document.querySelectorAll('.glass-card:not(:first-child)');
+            dataCards.forEach(card => {
+                card.style.display = 'none';
+            });
+        }
+    }
+
+    function updateDataTable(rows) {
+        const tbody = document.querySelector('table tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        rows.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="fw-bold">${row.time}</td>
+                <td>${row.open.toFixed(2)}</td>
+                <td class="text-success">${row.high.toFixed(2)}</td>
+                <td class="text-danger">${row.low.toFixed(2)}</td>
+                <td>${row.close.toFixed(2)}</td>
+                <td class="text-warning">${row.ha_vwap.toFixed(2)}</td>
+                <td class="d-none d-md-table-cell">${!isNaN(row.atr) ? row.atr.toFixed(2) : '-'}</td>
+                <td class="text-center">
+                    <i class="fas fa-circle status-indicator ${row.status ? 'status-green' : 'status-red'}" 
+                       data-bs-toggle="tooltip" 
+                       data-bs-placement="top"
+                       data-bs-html="true"
+                       title="${row.status ? '✅ <strong>Condition Met</strong>' : '❌ <strong>Condition Not Met</strong>'}"></i>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Reinitialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+
+    function updateChart(rows) {
+        console.log('Updating chart with new data:', rows.length, 'rows');
+        
+        if (!window.strikeChart) {
+            console.log('Chart not initialized, initializing now...');
+            initializeChart(rows);
+            return;
+        }
+        
+        // Update existing chart
+        const labels = rows.map(row => row.time);
+        const ohlcData = rows.map(row => ({
+            open: row.open,
+            high: row.high,
+            low: row.low,
+            close: row.close
+        }));
+        const vwaps = rows.map(row => row.ha_vwap);
+        
+        // Update chart data
+        window.strikeChart.data.labels = labels;
+        window.strikeChart.data.datasets[0].data = vwaps; // HA VWAP line
+        window.strikeChart.data.datasets[1].data = ohlcData.map(() => 0); // dummy data for candles
+        
+        // Update y-axis range
+        const allHighs = ohlcData.map(c => c.high);
+        const allLows = ohlcData.map(c => c.low);
+        const yMin = Math.min(...allLows);
+        const yMax = Math.max(...allHighs);
+        
+        window.strikeChart.options.scales.y.min = yMin;
+        window.strikeChart.options.scales.y.max = yMax;
+        
+        // Store OHLC data for candlestick drawing
+        window.currentOhlcData = ohlcData;
+        
+        // Update the chart
+        window.strikeChart.update();
+    }
+
+    function showDataError(message) {
+        let errorDiv = document.querySelector('.error-message');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            const container = document.querySelector('.container');
+            container.appendChild(errorDiv);
+        }
+        errorDiv.innerHTML = `
+            <h4><i class="fas fa-exclamation-triangle"></i> No Data Available</h4>
+            <p>${message}</p>
+            <small>Try selecting a different date when the market was open.</small>
+        `;
+        errorDiv.style.display = 'block';
+    }
+
+    function showUpdateError(message) {
+        let errorDiv = document.getElementById('update-error');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.id = 'update-error';
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                background: rgba(244, 67, 54, 0.95);
+                color: white;
+                padding: 12px 16px;
+                border-radius: 8px;
+                z-index: 9999;
+                font-size: 14px;
+                font-weight: 500;
+                max-width: 350px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
+            `;
+            document.body.appendChild(errorDiv);
+        }
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+        errorDiv.style.display = 'block';
+        
+        // Auto-hide error after 5 seconds
+        setTimeout(() => {
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        }, 5000);
+    }
+
+    function clearUpdateError() {
+        const errorDiv = document.getElementById('update-error');
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+        }
+    }
+
+    function updateLastRefreshTime() {
+        if (!lastUpdateTime) return;
+        
+        // Format the timestamp as YYYY-MM-DD HH:MM:SS
+        const timeString = lastUpdateTime.toLocaleString('en-CA', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }).replace(',', '');
+        
+        // Update the last updated display
+        const lastUpdatedDisplay = document.getElementById('last-updated-display');
+        if (lastUpdatedDisplay) {
+            lastUpdatedDisplay.innerHTML = `<i class="fas fa-clock"></i> <strong>Last Updated:</strong> ${timeString}`;
+        }
+    }
+
+    function startAutoUpdate() {
+        console.log('Starting Strike Details auto-update...');
+        // Update immediately
+        updateData();
+        // Then update every 10 seconds (slower for historical data)
+        updateInterval = setInterval(updateData, 10000);
+    }
+
+    function stopAutoUpdate() {
+        console.log('Stopping Strike Details auto-update...');
+        if (updateInterval) {
+            clearInterval(updateInterval);
+            updateInterval = null;
+        }
+    }
+
+    // Manual refresh functionality
+    function manualRefresh() {
+        console.log('Strike Details manual refresh triggered...');
+        
+        // Show loading indicator
+        showRefreshLoading();
+        
+        updateData();
+    }
+    
+    function showRefreshLoading() {
+        let loadingDiv = document.getElementById('refresh-loading');
+        if (!loadingDiv) {
+            loadingDiv = document.createElement('div');
+            loadingDiv.id = 'refresh-loading';
+            loadingDiv.style.cssText = `
+                position: fixed;
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(33, 150, 243, 0.95);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 25px;
+                z-index: 9999;
+                font-size: 14px;
+                font-weight: 500;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
+            `;
+            document.body.appendChild(loadingDiv);
+        }
+        loadingDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Refreshing data...`;
+        loadingDiv.style.display = 'block';
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            if (loadingDiv) {
+                loadingDiv.style.display = 'none';
+            }
+        }, 3000);
+    }
+
     // Date manipulation functions
     function loadToday() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('dateInput').value = today;
+        currentDate = today;
         document.getElementById('dateForm').submit();
     }
 
@@ -326,32 +702,67 @@
         date.setDate(date.getDate() + daysOffset);
         const dateString = date.toISOString().split('T')[0];
         document.getElementById('dateInput').value = dateString;
+        currentDate = dateString;
         document.getElementById('dateForm').submit();
     }
+
+    // Initialize Bootstrap tooltips and auto-refresh
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Start auto-update
+        startAutoUpdate();
+    });
+
+    // Continue auto-update even when page is hidden (background updates)
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            console.log('Strike Details page hidden, continuing auto-update in background...');
+            // Keep updating in background - don't stop
+        } else {
+            console.log('Strike Details page visible, auto-update already running...');
+            // Ensure auto-update is running when page becomes visible
+            if (!updateInterval) {
+                startAutoUpdate();
+            }
+        }
+    });
+
+    // Stop auto-update when page is about to unload
+    window.addEventListener('beforeunload', function() {
+        stopAutoUpdate();
+    });
+
+    // Update current date when form is submitted
+    document.getElementById('dateForm').addEventListener('submit', function(e) {
+        const newDate = document.getElementById('dateInput').value;
+        if (newDate) {
+            currentDate = newDate;
+            console.log('Date changed to:', currentDate);
+        }
+    });
 </script>
 
-{% if rows %}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const ctx = document.getElementById('strikeChart').getContext('2d');
-        const labels = [{% for row in rows %}"{{ row.time }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+    // Chart initialization function
+    function initializeChart(rows) {
+        const ctx = document.getElementById('strikeChart');
+        if (!ctx) {
+            console.log('Chart canvas not found');
+            return;
+        }
         
-        // OHLC Data for candlesticks
-        const ohlcData = [
-            {% for row in rows %}
-            {
-                open: {{ row.open }},
-                high: {{ row.high }},
-                low: {{ row.low }},
-                close: {{ row.close }}
-            }{% if not loop.last %}, {% endif %}
-            {% endfor %}
-        ];
-        
-        const vwaps = [{% for row in rows %}{{ row.ha_vwap }}{% if not loop.last %}, {% endif %}{% endfor %}];
-
-        // Use OHLC times as x-axis labels
-        const candleLabels = labels; // Already from OHLC rows
+        const labels = rows.map(row => row.time);
+        const ohlcData = rows.map(row => ({
+            open: row.open,
+            high: row.high,
+            low: row.low,
+            close: row.close
+        }));
+        const vwaps = rows.map(row => row.ha_vwap);
 
         // Compute y-axis min/max from OHLC data
         const allHighs = ohlcData.map(c => c.high);
@@ -359,11 +770,14 @@
         const yMin = Math.min(...allLows);
         const yMax = Math.max(...allHighs);
 
-        // Create a base bar chart for alignment
-        const chart = new Chart(ctx, {
+        // Store OHLC data globally for candlestick drawing
+        window.currentOhlcData = ohlcData;
+
+        // Create chart
+        window.strikeChart = new Chart(ctx.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: candleLabels,
+                labels: labels,
                 datasets: [
                     {
                         label: 'HA VWAP',
@@ -382,7 +796,7 @@
                     },
                     {
                         label: 'Candles',
-                        data: ohlcData.map((c, i) => 0), // dummy, we draw manually
+                        data: ohlcData.map(() => 0), // dummy data
                         backgroundColor: 'rgba(0,0,0,0)',
                         borderColor: 'rgba(0,0,0,0)',
                         borderWidth: 0,
@@ -425,8 +839,10 @@
                         callbacks: {
                             beforeBody: function(context) {
                                 const index = context[0].dataIndex;
-                                const candle = ohlcData[index];
+                                const candle = window.currentOhlcData[index];
                                 const vwap = vwaps[index];
+                                
+                                if (!candle) return [];
                                 
                                 return [
                                     `Open: ${candle.open.toFixed(2)}`,
@@ -437,7 +853,7 @@
                                 ];
                             },
                             label: function() {
-                                return ''; // Hide default label
+                                return '';
                             }
                         }
                     }
@@ -490,80 +906,101 @@
             }
         });
 
-        function drawCandlesticks() {
-            const chartArea = chart.chartArea;
-            const xScale = chart.scales.x;
-            const yScale = chart.scales.y;
-            
-            // Dynamically calculate candle width based on available space
-            const n = ohlcData.length;
-            const chartWidth = chartArea.right - chartArea.left;
-            const maxCandleWidth = 18;
-            const minCandleWidth = 4;
-            let candleWidth = Math.max(minCandleWidth, Math.min(maxCandleWidth, chartWidth / (n * 1.5)));
-            const wickWidth = 1;
-            
-            ohlcData.forEach((candle, index) => {
-                let x = xScale.getPixelForValue(index);
-                // Clamp x to chart area
-                x = Math.max(chartArea.left + candleWidth/2, Math.min(chartArea.right - candleWidth/2, x));
-                const highY = yScale.getPixelForValue(candle.high);
-                const lowY = yScale.getPixelForValue(candle.low);
-                const openY = yScale.getPixelForValue(candle.open);
-                const closeY = yScale.getPixelForValue(candle.close);
-                
-                const isBullish = candle.close >= candle.open;
-                const bodyTop = Math.min(openY, closeY);
-                const bodyBottom = Math.max(openY, closeY);
-                const bodyHeight = Math.abs(closeY - openY);
-                
-                // Draw the wick (high-low line)
-                ctx.strokeStyle = isBullish ? '#00ff88' : '#ff4757';
-                ctx.lineWidth = wickWidth;
-                ctx.beginPath();
-                ctx.moveTo(x, highY);
-                ctx.lineTo(x, lowY);
-                ctx.stroke();
-                
-                // Draw the candle body
-                if (bodyHeight > 0) {
-                    if (isBullish) {
-                        // Bullish: filled green rectangle with border
-                        ctx.fillStyle = '#00ff88';
-                        ctx.fillRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
-                        ctx.strokeStyle = '#00ff88';
-                        ctx.lineWidth = 2;
-                        ctx.strokeRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
-                    } else {
-                        // Bearish: filled red rectangle
-                        ctx.fillStyle = '#ff4757';
-                        ctx.fillRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
-                        ctx.strokeStyle = '#ff4757';
-                        ctx.lineWidth = 1;
-                        ctx.strokeRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
-                    }
-                } else {
-                    // Doji: draw a horizontal line
-                    ctx.strokeStyle = isBullish ? '#00ff88' : '#ff4757';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(x - candleWidth/2, openY);
-                    ctx.lineTo(x + candleWidth/2, openY);
-                    ctx.stroke();
-                }
-            });
-        }
-
         // Redraw candlesticks when chart updates
         const originalDraw = Chart.prototype.draw;
         Chart.prototype.draw = function() {
             originalDraw.apply(this, arguments);
-            if (this.canvas === ctx.canvas) {
+            if (this.canvas === ctx) {
                 drawCandlesticks();
             }
         };
+    }
+
+    function drawCandlesticks() {
+        if (!window.strikeChart || !window.currentOhlcData) return;
+        
+        const ctx = window.strikeChart.ctx;
+        const chartArea = window.strikeChart.chartArea;
+        const xScale = window.strikeChart.scales.x;
+        const yScale = window.strikeChart.scales.y;
+        
+        // Dynamically calculate candle width based on available space
+        const n = window.currentOhlcData.length;
+        const chartWidth = chartArea.right - chartArea.left;
+        const maxCandleWidth = 18;
+        const minCandleWidth = 4;
+        let candleWidth = Math.max(minCandleWidth, Math.min(maxCandleWidth, chartWidth / (n * 1.5)));
+        const wickWidth = 1;
+        
+        window.currentOhlcData.forEach((candle, index) => {
+            let x = xScale.getPixelForValue(index);
+            // Clamp x to chart area
+            x = Math.max(chartArea.left + candleWidth/2, Math.min(chartArea.right - candleWidth/2, x));
+            const highY = yScale.getPixelForValue(candle.high);
+            const lowY = yScale.getPixelForValue(candle.low);
+            const openY = yScale.getPixelForValue(candle.open);
+            const closeY = yScale.getPixelForValue(candle.close);
+            
+            const isBullish = candle.close >= candle.open;
+            const bodyTop = Math.min(openY, closeY);
+            const bodyBottom = Math.max(openY, closeY);
+            const bodyHeight = Math.abs(closeY - openY);
+            
+            // Draw the wick (high-low line)
+            ctx.strokeStyle = isBullish ? '#00ff88' : '#ff4757';
+            ctx.lineWidth = wickWidth;
+            ctx.beginPath();
+            ctx.moveTo(x, highY);
+            ctx.lineTo(x, lowY);
+            ctx.stroke();
+            
+            // Draw the candle body
+            if (bodyHeight > 0) {
+                if (isBullish) {
+                    // Bullish: filled green rectangle with border
+                    ctx.fillStyle = '#00ff88';
+                    ctx.fillRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+                    ctx.strokeStyle = '#00ff88';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+                } else {
+                    // Bearish: filled red rectangle
+                    ctx.fillStyle = '#ff4757';
+                    ctx.fillRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+                    ctx.strokeStyle = '#ff4757';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+                }
+            } else {
+                // Doji: draw a horizontal line
+                ctx.strokeStyle = isBullish ? '#00ff88' : '#ff4757';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x - candleWidth/2, openY);
+                ctx.lineTo(x + candleWidth/2, openY);
+                ctx.stroke();
+            }
+        });
+    }
+
+    // Chart initialization on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if rows %}
+        const initialRows = [
+            {% for row in rows %}
+            {
+                time: "{{ row.time }}",
+                open: {{ row.open }},
+                high: {{ row.high }},
+                low: {{ row.low }},
+                close: {{ row.close }},
+                ha_vwap: {{ row.ha_vwap }}
+            }{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        ];
+        initializeChart(initialRows);
+        {% endif %}
     });
 </script>
-{% endif %}
 </body>
 </html>

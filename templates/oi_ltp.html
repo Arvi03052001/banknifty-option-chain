@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="10">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BankNifty OI-LTP Chain</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -241,11 +240,7 @@
         }
 
         @media (max-width: 576px) {
-            .btn-text {
-                display: none;
-            }
-            
-            .nav-btn {
+             .nav-btn {
                 padding: 0.75rem 0.5rem;
             }
             
@@ -275,13 +270,23 @@
             </small>
         </div>
         {% endif %}
+        <div class="mt-3">
+            <div id="last-updated-display" class="text-center" style="
+                background: rgba(40, 167, 69, 0.1);
+                border: 1px solid rgba(40, 167, 69, 0.3);
+                border-radius: 10px;
+                padding: 8px 16px;
+                color: #28a745;
+                font-weight: 500;
+                font-size: 14px;
+            ">
+                <i class="fas fa-clock"></i> <strong>Last Updated:</strong> {{ last_updated }}
+            </div>
+        </div>
     </header>
 
     <main class="container-fluid">
         <div class="glass-card text-center">
-            <div class="mb-3">
-                <strong>Last Updated:</strong> {{ last_updated }}
-            </div>
             <div>
                 <span class="expiry-badge bg-success">Current: {{ expiry_dates[0].date }}</span>
                 <span class="expiry-badge bg-secondary">Next: {{ expiry_dates[1].date }}</span>
@@ -364,5 +369,273 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-update functionality
+        let updateInterval;
+        let isUpdating = false;
+        let lastUpdateTime = null;
+
+        function updateData() {
+            if (isUpdating) return;
+            isUpdating = true;
+            
+            console.log('Fetching OI-LTP data from /api/oi-ltp-data...');
+
+            fetch('/api/oi-ltp-data')
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('OI-LTP data received:', data);
+                    if (data.success) {
+                        updatePageContent(data.data);
+                        lastUpdateTime = new Date();
+                        updateLastRefreshTime();
+                    } else {
+                        console.error('Error fetching data:', data.error);
+                        showUpdateError('Server error: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Network error:', error);
+                    showUpdateError('Network error: ' + error.message);
+                })
+                .finally(() => {
+                    isUpdating = false;
+                });
+        }
+
+        function updatePageContent(data) {
+            console.log('Updating OI-LTP page content with:', data);
+            
+            // Update last updated time
+            const lastUpdatedElement = document.querySelector('.glass-card .mb-3 strong');
+            if (lastUpdatedElement) {
+                let textNode = lastUpdatedElement.nextSibling;
+                if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                    textNode.textContent = ' ' + (data.last_updated || '-');
+                } else {
+                    const newTextNode = document.createTextNode(' ' + (data.last_updated || '-'));
+                    lastUpdatedElement.parentNode.insertBefore(newTextNode, lastUpdatedElement.nextSibling);
+                }
+            }
+
+            // Update option LTP table
+            updateOptionLTPTable(data.option_ltp_chain, data.spot_price, data.highest_volume_strike);
+            
+            // Clear any error messages
+            clearUpdateError();
+        }
+
+        function updateOptionLTPTable(optionLtpChain, spotPrice, highestVolumeStrike) {
+            const tbody = document.querySelector('table tbody');
+            if (!tbody || !optionLtpChain) {
+                console.log('Table body not found or no option LTP chain data');
+                return;
+            }
+
+            console.log('Updating option LTP table with', optionLtpChain.length, 'rows');
+            tbody.innerHTML = '';
+            let spotInserted = false;
+
+            optionLtpChain.forEach(row => {
+                // Insert spot price row if needed
+                if (!spotInserted && row.strike > spotPrice) {
+                    const spotRow = document.createElement('tr');
+                    spotRow.innerHTML = `
+                        <td colspan="5" class="spot-price-box">
+                            🏦 BankNifty Spot: ${spotPrice}
+                        </td>
+                    `;
+                    tbody.appendChild(spotRow);
+                    spotInserted = true;
+                }
+
+                const tr = document.createElement('tr');
+                
+                // Determine strike classes
+                let strikeClasses = ['strike-price'];
+                if (row.strike === highestVolumeStrike) {
+                    strikeClasses.push('highest-volume-strike');
+                }
+                if (row.strike % 500 === 0) {
+                    strikeClasses.push('every-500-strike');
+                }
+
+                tr.innerHTML = `
+                    <td class="call-volume ${row.call_volume_class || ''}">${row.call_volume_display || '-'}</td>
+                    <td class="call-ltp">${row.call_ltp > 0 ? row.call_ltp.toFixed(2) : '-'}</td>
+                    <td class="${strikeClasses.join(' ')}">${row.strike}</td>
+                    <td class="put-ltp">${row.put_ltp > 0 ? row.put_ltp.toFixed(2) : '-'}</td>
+                    <td class="put-volume ${row.put_volume_class || ''}">${row.put_volume_display || '-'}</td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        function showUpdateError(message) {
+            let errorDiv = document.getElementById('update-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.id = 'update-error';
+                errorDiv.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    background: rgba(244, 67, 54, 0.95);
+                    color: white;
+                    padding: 12px 16px;
+                    border-radius: 8px;
+                    z-index: 9999;
+                    font-size: 14px;
+                    font-weight: 500;
+                    max-width: 350px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    backdrop-filter: blur(10px);
+                `;
+                document.body.appendChild(errorDiv);
+            }
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+            errorDiv.style.display = 'block';
+            
+            // Auto-hide error after 5 seconds
+            setTimeout(() => {
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+            }, 5000);
+        }
+
+        function clearUpdateError() {
+            const errorDiv = document.getElementById('update-error');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        }
+
+        function updateLastRefreshTime() {
+            if (!lastUpdateTime) return;
+            
+            // Format the timestamp as YYYY-MM-DD HH:MM:SS
+            const timeString = lastUpdateTime.toLocaleString('en-CA', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }).replace(',', '');
+            
+            // Update the last updated display
+            const lastUpdatedDisplay = document.getElementById('last-updated-display');
+            if (lastUpdatedDisplay) {
+                lastUpdatedDisplay.innerHTML = `<i class="fas fa-clock"></i> <strong>Last Updated:</strong> ${timeString}`;
+            }
+        }
+
+        function startAutoUpdate() {
+            console.log('Starting OI-LTP auto-update...');
+            // Update immediately
+            updateData();
+            // Then update every 5 seconds
+            updateInterval = setInterval(updateData, 5000);
+        }
+
+        function stopAutoUpdate() {
+            console.log('Stopping OI-LTP auto-update...');
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+        }
+
+        // Start auto-update when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('OI-LTP DOM loaded, starting auto-update...');
+            startAutoUpdate();
+        });
+
+        // Continue auto-update even when page is hidden (background updates)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                console.log('OI-LTP page hidden, continuing auto-update in background...');
+                // Keep updating in background - don't stop
+            } else {
+                console.log('OI-LTP page visible, auto-update already running...');
+                // Ensure auto-update is running when page becomes visible
+                if (!updateInterval) {
+                    startAutoUpdate();
+                }
+            }
+        });
+
+        // Stop auto-update when page is about to unload
+        window.addEventListener('beforeunload', function() {
+            stopAutoUpdate();
+        });
+
+        // Manual refresh button functionality
+        function manualRefresh() {
+            console.log('OI-LTP manual refresh triggered...');
+            
+            // Show loading indicator
+            showRefreshLoading();
+            
+            updateData();
+        }
+        
+        function showRefreshLoading() {
+            let loadingDiv = document.getElementById('refresh-loading');
+            if (!loadingDiv) {
+                loadingDiv = document.createElement('div');
+                loadingDiv.id = 'refresh-loading';
+                loadingDiv.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(33, 150, 243, 0.95);
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 25px;
+                    z-index: 9999;
+                    font-size: 14px;
+                    font-weight: 500;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    backdrop-filter: blur(10px);
+                `;
+                document.body.appendChild(loadingDiv);
+            }
+            loadingDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Refreshing data...`;
+            loadingDiv.style.display = 'block';
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                if (loadingDiv) {
+                    loadingDiv.style.display = 'none';
+                }
+            }, 3000);
+        }
+
+        // Update the refresh button to use manual refresh
+        document.addEventListener('DOMContentLoaded', function() {
+            const refreshButton = document.querySelector('button[onclick="location.reload()"]');
+            if (refreshButton) {
+                refreshButton.removeAttribute('onclick');
+                refreshButton.addEventListener('click', manualRefresh);
+                console.log('OI-LTP refresh button updated to use AJAX');
+            } else {
+                console.log('OI-LTP refresh button not found');
+            }
+        });
+    </script>
 </body>
 </html>

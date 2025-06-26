@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="10">
-    <title>BankNifty Trading Dashboard</title>
+        <title>BankNifty Trading Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -686,6 +685,19 @@
         <div class="container">
             <h1 class="header-title">BankNifty Trading Dashboard</h1>
             <p class="header-subtitle">Real-time market analysis & trading signals</p>
+            <div class="mt-3">
+                <div id="last-updated-display" class="text-center" style="
+                    background: rgba(40, 167, 69, 0.1);
+                    border: 1px solid rgba(40, 167, 69, 0.3);
+                    border-radius: 10px;
+                    padding: 8px 16px;
+                    color: #28a745;
+                    font-weight: 500;
+                    font-size: 14px;
+                ">
+                    <i class="fas fa-clock"></i> <strong>Last Updated:</strong> {{ last_updated }}
+                </div>
+            </div>
         </div>
     </header>
 
@@ -903,8 +915,144 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Auto-update functionality
+        let updateInterval;
+        let isUpdating = false;
+        let lastUpdateTime = null;
+
+        function updateData() {
+            if (isUpdating) return;
+            isUpdating = true;
+            
+            console.log('Fetching trade data from /api/trade-data...');
+
+            fetch('/api/trade-data')
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Trade data received:', data);
+                    if (data.success) {
+                        updatePageContent(data.data);
+                        lastUpdateTime = new Date();
+                        updateLastRefreshTime();
+                        clearUpdateError();
+                    } else {
+                        console.error('Error fetching data:', data.error);
+                        showUpdateError('Server error: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Network error:', error);
+                    showUpdateError('Network error: ' + error.message);
+                })
+                .finally(() => {
+                    isUpdating = false;
+                });
+        }
+        
+        function startAutoUpdate() {
+            console.log('Starting Trade auto-update...');
+            // Update immediately
+            updateData();
+            // Then update every 5 seconds
+            updateInterval = setInterval(updateData, 5000);
+        }
+
+        function stopAutoUpdate() {
+            console.log('Stopping Trade auto-update...');
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+        }
+
+        function updatePageContent(data) {
+            // Update futures price
+            const futuresPriceElement = document.querySelector('.price-value');
+            if (futuresPriceElement) {
+                futuresPriceElement.textContent = data.futures_price;
+            }
+
+            // Update HA VWAP
+            const haVwapElement = document.querySelector('.price-display:nth-child(2) .price-value');
+            if (haVwapElement) {
+                haVwapElement.textContent = data.ha_vwap.toFixed(2);
+            }
+
+            // Update last updated time
+            const lastUpdatedElements = document.querySelectorAll('.price-updated');
+            lastUpdatedElements.forEach(element => {
+                if (element.textContent.includes('Last Updated:')) {
+                    element.innerHTML = `<i class="fas fa-clock"></i> Last Updated: ${data.last_updated}`;
+                }
+            });
+
+            // Update price position badge
+            const positionBadge = document.querySelector('.status-badge.price-above, .status-badge.price-below');
+            if (positionBadge) {
+                positionBadge.className = `status-badge price-${data.ha_price_position}`;
+                positionBadge.textContent = `${data.ha_price_position.toUpperCase()} HA-VWAP`;
+            }
+
+            // Update price difference
+            const priceDiffElement = document.querySelector('.price-updated br + text');
+            if (priceDiffElement) {
+                priceDiffElement.textContent = `by ${data.price_ha_vwap_diff.toFixed(2)} points`;
+            }
+
+            // Update options tables
+            updateOptionsTable('call', data.call_lt_200);
+            updateOptionsTable('put', data.put_lt_200);
+        }
+
+        function updateOptionsTable(type, options) {
+            const tbody = document.querySelector(`.options-grid > div:${type === 'call' ? 'first-child' : 'last-child'} tbody`);
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+
+            if (options && options.length > 0) {
+                options.forEach(opt => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><a href="/strike-details/${type === 'call' ? 'CE' : 'PE'}/${opt.strike}" class="table-link">${opt.strike}</a></td>
+                        <td>₹${opt.ltp}</td>
+                        <td>₹${opt.ha_vwap.toFixed(2)}</td>
+                        <td>₹${opt.atr.toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="4">No ${type === 'call' ? 'Call' : 'Put'} options with LTP below ₹200</td>`;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function startAutoUpdate() {
+            // Update immediately
+            updateData();
+            // Then update every 5 seconds
+            updateInterval = setInterval(updateData, 5000);
+        }
+
+        function stopAutoUpdate() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+        }
+
         // Add smooth scrolling and modern interactions
         document.addEventListener('DOMContentLoaded', function() {
+            // Start auto-update
+            startAutoUpdate();
+
             // Add fade-in animation to elements
             const observerOptions = {
                 threshold: 0.1,
@@ -936,6 +1084,25 @@
             }, 2000);
         });
 
+        // Continue auto-update even when page is hidden (background updates)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                console.log('Trade page hidden, continuing auto-update in background...');
+                // Keep updating in background - don't stop
+            } else {
+                console.log('Trade page visible, auto-update already running...');
+                // Ensure auto-update is running when page becomes visible
+                if (!updateInterval) {
+                    startAutoUpdate();
+                }
+            }
+        });
+
+        // Stop auto-update when page is about to unload
+        window.addEventListener('beforeunload', function() {
+            stopAutoUpdate();
+        });
+
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen();
@@ -944,11 +1111,129 @@
             }
         }
 
+        // Manual refresh button functionality
+        function manualRefresh() {
+            console.log('Trade manual refresh triggered...');
+            
+            // Show loading indicator
+            showRefreshLoading();
+            
+            updateData();
+        }
+        
+        function showRefreshLoading() {
+            let loadingDiv = document.getElementById('refresh-loading');
+            if (!loadingDiv) {
+                loadingDiv = document.createElement('div');
+                loadingDiv.id = 'refresh-loading';
+                loadingDiv.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(33, 150, 243, 0.95);
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 25px;
+                    z-index: 9999;
+                    font-size: 14px;
+                    font-weight: 500;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    backdrop-filter: blur(10px);
+                `;
+                document.body.appendChild(loadingDiv);
+            }
+            loadingDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Refreshing data...`;
+            loadingDiv.style.display = 'block';
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                if (loadingDiv) {
+                    loadingDiv.style.display = 'none';
+                }
+            }, 3000);
+        }
+        
+        function showUpdateError(message) {
+            let errorDiv = document.getElementById('update-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.id = 'update-error';
+                errorDiv.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    background: rgba(244, 67, 54, 0.95);
+                    color: white;
+                    padding: 12px 16px;
+                    border-radius: 8px;
+                    z-index: 9999;
+                    font-size: 14px;
+                    font-weight: 500;
+                    max-width: 350px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    backdrop-filter: blur(10px);
+                `;
+                document.body.appendChild(errorDiv);
+            }
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+            errorDiv.style.display = 'block';
+            
+            // Auto-hide error after 5 seconds
+            setTimeout(() => {
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+            }, 5000);
+        }
+        
+        function clearUpdateError() {
+            const errorDiv = document.getElementById('update-error');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        }
+        
+        function updateLastRefreshTime() {
+            if (!lastUpdateTime) return;
+            
+            // Format the timestamp as YYYY-MM-DD HH:MM:SS
+            const timeString = lastUpdateTime.toLocaleString('en-CA', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }).replace(',', '');
+            
+            // Update the last updated display
+            const lastUpdatedDisplay = document.getElementById('last-updated-display');
+            if (lastUpdatedDisplay) {
+                lastUpdatedDisplay.innerHTML = `<i class="fas fa-clock"></i> <strong>Last Updated:</strong> ${timeString}`;
+            }
+        }
+
+        // Update the refresh button to use manual refresh
+        document.addEventListener('DOMContentLoaded', function() {
+            const refreshButton = document.querySelector('button[onclick="location.reload()"]');
+            if (refreshButton) {
+                refreshButton.removeAttribute('onclick');
+                refreshButton.addEventListener('click', manualRefresh);
+                console.log('Trade refresh button updated to use AJAX');
+            } else {
+                console.log('Trade refresh button not found');
+            }
+        });
+
         // Add keyboard shortcuts
         document.addEventListener('keydown', function(e) {
             if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
-                location.reload();
+                manualRefresh();
             }
             if (e.key === 'f' && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
