@@ -12,11 +12,10 @@ class Config:
         self.fyers_token = None
         self.github_token = None
         
-        # Fyers API Configuration (these are typically public app credentials)
-        # You'll need to replace these with your actual Fyers app credentials
-        self.CLIENT_ID = os.getenv('FYERS_CLIENT_ID', 'XA46287-100')  # Replace with your actual client ID
-        self.SECRET_ID = os.getenv('FYERS_SECRET_ID', 'your_secret_key_here')  # Replace with your actual secret
-        self.REDIRECT_URI = os.getenv('FYERS_REDIRECT_URI', 'https://trade.fyers.in/api-login/redirect-to-app')
+        # Fyers API Configuration - Updated with correct credentials
+        self.CLIENT_ID = os.getenv('FYERS_CLIENT_ID', 'V6GL1Z0UPG-100')  # Your actual client ID
+        self.SECRET_ID = os.getenv('FYERS_SECRET_ID', 'GAUU7TXF41')  # Your actual secret
+        self.REDIRECT_URI = os.getenv('FYERS_REDIRECT_URI', 'https://www.google.com/')
         
         self.load_tokens()
     
