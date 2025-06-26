@@ -1,0 +1,13 @@
+# Minimal requirements for Render deployment
+Flask==2.3.3
+requests==2.31.0
+gunicorn==21.2.0
+Werkzeug==2.3.7
+pytz==2023.3
+python-dateutil==2.8.2
+schedule==1.2.0
+fyers-apiv3==3.0.6
+
+# Data processing - use older stable versions
+numpy==1.24.3
+pandas==2.0.3

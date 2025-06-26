@@ -3,10 +3,12 @@ services:
     name: banknifty-option-chain
     env: python
     plan: starter
-    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
+    buildCommand: chmod +x build.sh && ./build.sh
     startCommand: python start_services.py
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: PIP_UPGRADE
+        value: 3.11.8
+      - key: PIP_NO_BUILD_ISOLATION
+        value: "false"
+      - key: PIP_PREFER_BINARY
         value: "true"
