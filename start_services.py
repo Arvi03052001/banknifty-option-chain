@@ -11,6 +11,7 @@ import threading
 import subprocess
 from datetime import datetime
 import signal
+from config import config
 
 def log_message(message):
     """Log message with timestamp"""
@@ -49,8 +50,7 @@ def start_web_app():
         log_message("Starting web application...")
         # Import and run web app
         import web_app
-        port = int(os.environ.get('PORT', 5000))
-        web_app.app.run(debug=False, host='0.0.0.0', port=port)
+        web_app.app.run(debug=False, host=config.host, port=config.port)
     except Exception as e:
         log_message(f"Web app error: {e}")
         sys.exit(1)
@@ -68,10 +68,7 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
     
-    # Check if we're in production (Render sets this)
-    is_production = os.environ.get('RENDER') is not None
-    
-    if is_production:
+    if config.is_production:
         log_message("Running in production mode on Render")
         
         # Start snapshot service in background thread

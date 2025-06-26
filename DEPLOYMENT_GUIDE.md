@@ -37,10 +37,14 @@
    - **Start Command:** `python start_services.py`
    - **Instance Type:** Choose "Free" for testing, "Starter" for production
 
-4. **Set Environment Variables:**
+4. **Set Environment Variables (CRITICAL FOR TOKENS):**
    - In the Render dashboard, go to your service
    - Click "Environment" tab
-   - Add any environment variables if needed
+   - Add these environment variables:
+     - `FYERS_TOKEN`: Your Fyers API JWT token
+     - `GITHUB_TOKEN`: Your GitHub Personal Access Token
+     - `RENDER`: `true` (indicates production environment)
+     - `TZ`: `Asia/Kolkata` (for Indian market hours)
 
 5. **Deploy:**
    - Click "Create Web Service"
@@ -73,18 +77,31 @@
    - Click "Generate token"
    - **COPY THE TOKEN** (you won't see it again!)
 
-### Step 2: Add Token to Your App
+### Step 2: Add Tokens (Two Methods)
 
-1. **Update token.txt file:**
+#### Method 1: For Render Deployment (Recommended)
+- **Add tokens as Environment Variables in Render dashboard:**
+  - `FYERS_TOKEN`: Your Fyers JWT token (first line from token.txt)
+  - `GITHUB_TOKEN`: Your GitHub Personal Access Token
+- **Benefits**: Secure, not stored in code, easy to update
+
+#### Method 2: For Local Development
+1. **Update token.txt file locally:**
    - Open `token.txt` in your project
-   - Add your GitHub token:
+   - Add your tokens:
    ```
-   # Your existing Fyers token stays here
+   # Your Fyers token (first line)
    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
    # Add your GitHub token below
-   github_token=ghp_your_github_token_here
+   github_token=ghp_your_new_github_token_here
    ```
+   - **Note**: This file is excluded from Git for security
+
+⚠️ **IMPORTANT SECURITY NOTE:**
+- The old GitHub token was exposed and should be **revoked immediately**
+- Generate a **new** GitHub token for production use
+- Never commit tokens to Git (token.txt is in .gitignore)
 
 2. **Create a repository for CSV storage:**
    - Create another GitHub repository called `banknifty-data`
@@ -117,12 +134,22 @@
 3. **`runtime.txt`** - Specifies Python version
 4. **`start_services.py`** - Startup script for background services
 5. **`github_storage.py`** - GitHub integration for CSV storage
-6. **`.gitignore`** - Excludes unnecessary files from Git
+6. **`config.py`** - **NEW**: Smart configuration system for tokens
+7. **`.gitignore`** - Excludes unnecessary files from Git
 
 ### Modified Files:
 
 1. **`web_app.py`** - Added health check endpoints and Render compatibility
-2. **`token.txt`** - Added placeholder for GitHub token
+2. **`start_services.py`** - Updated to use new config system
+3. **`token.txt`** - Now safely excluded from Git
+
+### 🔐 New Configuration System:
+
+The app now uses a smart configuration system (`config.py`) that:
+- **Production (Render)**: Automatically loads tokens from environment variables
+- **Local Development**: Falls back to token.txt file
+- **Security**: Never exposes tokens in code or logs
+- **Flexibility**: Easy to switch between environments
 
 ## 🌐 Accessing Your App
 

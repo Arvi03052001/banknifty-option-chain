@@ -4,30 +4,19 @@ import base64
 import json
 from datetime import datetime
 import pandas as pd
+from config import config
 
 class GitHubStorage:
-    def __init__(self, token_file="token.txt"):
-        """Initialize GitHub storage with token from file"""
-        self.token = self._load_github_token(token_file)
+    def __init__(self):
+        """Initialize GitHub storage with token from config"""
+        self.token = config.github_token
         self.repo_owner = None  # Will be set when first used
         self.repo_name = None   # Will be set when first used
         self.base_url = "https://api.github.com"
         
-    def _load_github_token(self, token_file):
-        """Load GitHub token from file"""
-        try:
-            with open(token_file, 'r') as f:
-                content = f.read().strip()
-                # Look for GitHub token in the file
-                lines = content.split('\n')
-                for line in lines:
-                    if 'github_token' in line.lower() or 'gh_token' in line.lower():
-                        return line.split('=')[-1].strip()
-                # If no specific GitHub token found, assume the whole content is the token
-                return content
-        except FileNotFoundError:
-            print(f"[WARNING] {token_file} not found. GitHub storage will not work.")
-            return None
+        if not self.token:
+            print("[WARNING] GitHub token not found. GitHub storage will not work.")
+            print("Please set GITHUB_TOKEN environment variable or add to token.txt")
     
     def set_repository(self, owner, repo_name):
         """Set the GitHub repository details"""
@@ -150,8 +139,12 @@ def setup_github_storage():
     github = GitHubStorage()
     
     if not github.token:
-        print("Please add your GitHub token to token.txt file")
-        print("Format: github_token=your_token_here")
+        print("GitHub token not found!")
+        if config.is_production:
+            print("Please set GITHUB_TOKEN environment variable in Render dashboard")
+        else:
+            print("Please add your GitHub token to token.txt file")
+            print("Format: github_token=your_token_here")
         return None
     
     # You can either create a new repository or use an existing one
