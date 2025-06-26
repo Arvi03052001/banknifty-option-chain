@@ -11,6 +11,13 @@ class Config:
     def __init__(self):
         self.fyers_token = None
         self.github_token = None
+        
+        # Fyers API Configuration (these are typically public app credentials)
+        # You'll need to replace these with your actual Fyers app credentials
+        self.CLIENT_ID = os.getenv('FYERS_CLIENT_ID', 'XA46287-100')  # Replace with your actual client ID
+        self.SECRET_ID = os.getenv('FYERS_SECRET_ID', 'your_secret_key_here')  # Replace with your actual secret
+        self.REDIRECT_URI = os.getenv('FYERS_REDIRECT_URI', 'https://trade.fyers.in/api-login/redirect-to-app')
+        
         self.load_tokens()
     
     def load_tokens(self):
@@ -75,3 +82,9 @@ class Config:
 
 # Global config instance
 config = Config()
+
+# Backward compatibility - expose commonly used values
+client_id = config.CLIENT_ID
+CLIENT_ID = config.CLIENT_ID
+SECRET_ID = config.SECRET_ID
+REDIRECT_URI = config.REDIRECT_URI
